@@ -1,0 +1,34 @@
+name: Run tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  run-tests:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21.x'
+        
+    - name: Install dependencies
+      run: go get .
+      
+    - name: Format
+      run: go fmt ./...
+
+    - name: Vet
+      run: go vet ./...
+
+    - name: Run Tests
+      run: go test -race ./...

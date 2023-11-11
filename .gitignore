@@ -1,0 +1,4 @@
+.vscode
+*.exe
+test-*
+cov.out

@@ -1,0 +1,56 @@
+name: Build and release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - {GOOS: linux, GOARCH: amd64}
+          - {GOOS: linux, GOARCH: arm64}
+          - {GOOS: windows, GOARCH: amd64}
+          - {GOOS: darwin, GOARCH: amd64}
+          - {GOOS: darwin, GOARCH: arm64}
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21.x'
+        
+    - name: Install dependencies
+      run: go get .
+
+    - name: Build
+      env:
+          CGO_ENABLED: 0
+          GOOS: ${{ matrix.GOOS }}
+          GOARCH: ${{ matrix.GOARCH }}
+      run: |
+        VERSION="$(git describe --tags)"
+        DIR="$(mktemp -d)"
+        mkdir "$DIR/eddy"
+        go build -trimpath -ldflags="-s -w" -o "$DIR/eddy"
+        if [ "$GOOS" == "windows" ]; then
+          (cd "$DIR"; zip "eddy.zip" -r eddy)
+          mv "$DIR/eddy.zip" "eddy-$VERSION-$GOOS-$GOARCH.zip"
+        else
+          tar -cvzf "eddy-$VERSION-$GOOS-$GOARCH.tar.gz" -C "$DIR" eddy
+        fi
+        if [ "$GOOS" == "darwin" ]; then
+          mv eddy-$VERSION-darwin-$GOARCH.tar.gz eddy-$VERSION-macOS-$GOARCH.tar.gz
+        fi
+
+    - name: Attach
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          ./eddy-*
