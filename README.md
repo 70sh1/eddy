@@ -4,16 +4,16 @@ _eddy_ is a simple and fast CLI file encryption tool. It features concurrent fil
 
 ### Examples
 ```
-eddy encrypt secret.txt
+eddy e secret.txt
 ```
 ```
-eddy -w e secret.txt secret2.txt
+eddy --overwrite encrypt secret.txt secret2.txt
 ```
 ```
 eddy -g 8 enc secret.txt
 ```
 ```
-eddy -wo "home/Documents" dec secret.txt
+eddy -wo "home/Documents" dec secret.txt.eddy
 ```
 ```
 eddy --unsafe-password supeR-$ecr3t enc "D:/stuff/secret.txt" secret2.txt
