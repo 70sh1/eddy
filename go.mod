@@ -2,6 +2,8 @@ module github.com/70sh1/eddy
 
 go 1.21.2
 
+retract v1.0.0
+
 require (
 	github.com/cheggaaa/pb/v3 v3.1.4
 	github.com/stretchr/testify v1.8.4
