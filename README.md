@@ -8,7 +8,7 @@
 <a href="https://github.com/70sh1/eddy/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-green"></a>
 </p>
 
-_eddy_ is a simple and fast CLI file encryption tool. It features concurrent file processing while ensuring data authenticity and plausible deniability. It is also capable of generating secure [passphrases](https://www.eff.org/deeplinks/2016/07/new-wordlists-random-passphrases).
+_eddy_ is a simple and fast CLI file encryption tool. It features concurrent file processing while ensuring data authenticity and plausible deniability. It is also capable of generating secure [passphrases](https://www.eff.org/dice).
 
 ### Examples
 ```
