@@ -28,7 +28,7 @@ const (
 )
 
 //go:embed wordlist.txt
-var embeded embed.FS
+var embedded embed.FS
 
 type processor struct {
 	c          *chacha20.Cipher
@@ -257,7 +257,7 @@ func generatePassphrase(length int) (string, error) {
 	if length < 6 {
 		return "", errors.New("length < 6 is not secure")
 	}
-	wordlist, err := embeded.ReadFile("wordlist.txt")
+	wordlist, err := embedded.ReadFile("wordlist.txt")
 	if err != nil {
 		return "", err
 	}
@@ -284,7 +284,7 @@ func deriveKey(password string, salt []byte) ([]byte, error) {
 func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	processor, err := NewProcessor(pathIn, password, "enc")
 	if err != nil {
-		// Moving these repetitive lines to the fucntion call would be nice and much cleaner,
+		// Moving these repetitive lines to the function call would be nice and much cleaner,
 		// but then the bar doesn't update properly for some reason.
 		bar.Set("status", "❌")
 		bar.Set("error", err)
