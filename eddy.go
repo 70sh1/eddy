@@ -21,7 +21,7 @@ func main() {
 	app := &cli.App{
 		Name:                   "eddy",
 		Usage:                  "simple and fast file encryption",
-		Version:                "1.0.3",
+		Version:                "1.0.4",
 		UseShortOptionHandling: true,
 		Suggest:                true,
 		Flags: []cli.Flag{
