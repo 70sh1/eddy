@@ -56,7 +56,6 @@ func main() {
 				Aliases: []string{"enc", "e"},
 				Usage:   "encrypt provided `FILES`",
 				Action: func(cCtx *cli.Context) error {
-					fmt.Println()
 					var noPasswordProvided bool
 					var numProcessed int64
 					var err error
@@ -88,7 +87,6 @@ func main() {
 					}
 
 					startTime := time.Now()
-
 					if numProcessed, err = encryptFiles(paths, outputDir, password, overwrite); err != nil {
 						log.Fatal(err)
 					}
@@ -106,7 +104,6 @@ func main() {
 				Aliases: []string{"dec", "d"},
 				Usage:   "decrypt provided `FILES`",
 				Action: func(cCtx *cli.Context) error {
-					fmt.Println()
 					var err error
 					paths := append(cCtx.Args().Tail(), cCtx.Args().First())
 					if paths, outputDir, err = cleanAndCheckPaths(paths, outputDir); err != nil {
@@ -119,6 +116,7 @@ func main() {
 							log.Fatal(err)
 						}
 					}
+
 					startTime := time.Now()
 					if err := decryptFiles(paths, outputDir, password, overwrite); err != nil {
 						log.Fatal(err)
@@ -131,6 +129,7 @@ func main() {
 			},
 		},
 	}
+	fmt.Println()
 	log.SetFlags(0)            // Remove date/time prefix from logger
 	log.SetPrefix("❗ ERROR: ") // Only logging errors with log.Fatal so this prefix is set
 	if err := app.Run(os.Args); err != nil {

@@ -98,11 +98,12 @@ func NewProcessor(sourcePath string, password string, mode string) (*processor, 
 	}
 	debug.FreeOSMemory() // Free memory held after scrypt call
 
-	blakeKey := make([]byte, 64)
 	c, err := chacha20.NewUnauthenticatedCipher(key, nonce)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing cipher; %v", err)
 	}
+
+	blakeKey := make([]byte, 64)
 	c.XORKeyStream(blakeKey, blakeKey)
 	blake, err := blake2b.New512(blakeKey)
 	if err != nil {
@@ -113,15 +114,15 @@ func NewProcessor(sourcePath string, password string, mode string) (*processor, 
 	return &processor{c, blake, file, nonce, salt, fileSize}, nil
 }
 
-// Read bytes from encryptor's source (file) into buffer b, truncate it if n < len(b),
+// Read len(b) bytes from encryptor's source (file) into buffer b, truncate it if n < len(b),
 // XOR it, update the encryptor's HMAC with the resulting slice,
 // return number of bytes read and error.
-func (ab *encryptor) Read(b []byte) (int, error) {
-	n, err := ab.source.Read(b)
+func (e *encryptor) Read(b []byte) (int, error) {
+	n, err := e.source.Read(b)
 	if n > 0 {
 		b = b[:n]
-		ab.c.XORKeyStream(b, b)
-		if err := ab.updateHmac(b); err != nil {
+		e.c.XORKeyStream(b, b)
+		if err := e.updateHmac(b); err != nil {
 			return n, err
 		}
 		return n, err
@@ -129,24 +130,24 @@ func (ab *encryptor) Read(b []byte) (int, error) {
 	return 0, io.EOF
 }
 
-// Read bytes from decryptor's source (file) into buffer b, truncate it if n < len(b),
+// Read len(b) bytes from decryptor's source (file) into buffer b, truncate it if n < len(b),
 // update HMAC with slice, XOR the slice,
 // return number of bytes read and error.
-func (ab *decryptor) Read(b []byte) (int, error) {
-	n, err := ab.source.Read(b)
+func (d *decryptor) Read(b []byte) (int, error) {
+	n, err := d.source.Read(b)
 	if n > 0 {
 		b = b[:n]
-		if err := ab.updateHmac(b); err != nil {
+		if err := d.updateHmac(b); err != nil {
 			return n, err
 		}
-		ab.c.XORKeyStream(b, b)
+		d.c.XORKeyStream(b, b)
 		return n, err
 	}
 	return 0, io.EOF
 }
 
-func (ab *processor) updateHmac(data []byte) error {
-	n, err := ab.hmac.Write(data)
+func (p *processor) updateHmac(data []byte) error {
+	n, err := p.hmac.Write(data)
 	if err != nil {
 		return err
 	}
@@ -188,7 +189,7 @@ func closeAndRemove(f *os.File) {
 	os.Remove(f.Name())
 }
 
-func limitStringLength(s string, n int) string {
+func filenameOverflow(s string, n int) string {
 	if len(s) > n {
 		return s[:n] + "..."
 	}
@@ -242,12 +243,13 @@ func cleanAndCheckPaths(paths []string, outputDir string) ([]string, string, err
 	return paths, outputDir, nil
 }
 
+// Create new progress bar pool.
 func newBarPool(paths []string) (pool *pb.Pool, bars []*pb.ProgressBar) {
 	barTmpl := `{{ string . "status" }} {{ string . "filename" }} {{ string . "filesize" }} {{ bar . "[" "-"  ">" " " "]" }} {{ string . "error" }}`
 	for _, path := range paths {
 		bar := pb.New64(1).SetTemplateString(barTmpl).SetWidth(80)
 		bar.Set("status", "  ")
-		bar.Set("filename", limitStringLength(filepath.Base(path), 25))
+		bar.Set("filename", filenameOverflow(filepath.Base(path), 25))
 		bars = append(bars, bar)
 	}
 	return pb.NewPool(bars...), bars
@@ -255,7 +257,7 @@ func newBarPool(paths []string) (pool *pb.Pool, bars []*pb.ProgressBar) {
 
 func generatePassphrase(length int) (string, error) {
 	if length < 6 {
-		return "", errors.New("length < 6 is not secure")
+		return "", errors.New("length less than 6 is not secure")
 	}
 	wordlist, err := embedded.ReadFile("wordlist.txt")
 	if err != nil {
@@ -281,13 +283,17 @@ func deriveKey(password string, salt []byte) ([]byte, error) {
 	return scrypt.Key([]byte(password), salt, 65536, 8, 1, 32) // 65536 == 2^16
 }
 
+func barFail(bar *pb.ProgressBar, err error) {
+	bar.Set("status", "❌")
+	bar.Set("error", err)
+}
+
 func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	processor, err := NewProcessor(pathIn, password, "enc")
 	if err != nil {
-		// Moving these repetitive lines to the function call would be nice and much cleaner,
+		// Moving this repetitive line to this function's call would be nice and much cleaner,
 		// but then the bar doesn't update properly for some reason.
-		bar.Set("status", "❌")
-		bar.Set("error", err)
+		barFail(bar, err)
 		return err
 	}
 	encryptor := &encryptor{processor}
@@ -295,8 +301,7 @@ func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 
 	tmpFile, err := os.CreateTemp(filepath.Dir(pathOut), "*.tmp")
 	if err != nil {
-		bar.Set("status", "❌")
-		bar.Set("error", err)
+		barFail(bar, err)
 		return err
 	}
 	defer closeAndRemove(tmpFile)
@@ -308,8 +313,7 @@ func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	header = append(header, tagPlaceholder...)
 
 	if _, err := tmpFile.Write(header); err != nil {
-		bar.Set("status", "❌")
-		bar.Set("error", err)
+		barFail(bar, err)
 		return err
 	}
 
@@ -319,28 +323,24 @@ func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	defer w.Close()
 
 	if _, err := io.Copy(w, encryptor); err != nil {
-		bar.Set("status", "❌")
-		bar.Set("error", err)
+		barFail(bar, err)
 		return err
 	}
 
 	tag := encryptor.hmac.Sum(nil)
 	if _, err := tmpFile.Seek(int64(len(encryptor.nonce)+len(encryptor.hmacSalt)), 0); err != nil {
-		bar.Set("status", "❌")
-		bar.Set("error", err)
+		barFail(bar, err)
 		return err
 	}
 	if _, err := tmpFile.Write(tag); err != nil {
-		bar.Set("status", "❌")
-		bar.Set("error", err)
+		barFail(bar, err)
 		return err
 	}
 
 	tmpFile.Close()
 	encryptor.source.Close()
 	if err := os.Rename(tmpFile.Name(), pathOut); err != nil {
-		bar.Set("status", "❌")
-		bar.Set("error", err)
+		barFail(bar, err)
 		return err
 	}
 
@@ -352,8 +352,7 @@ func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 func decryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	processor, err := NewProcessor(pathIn, password, "dec")
 	if err != nil {
-		bar.Set("status", "❌")
-		bar.Set("error", errors.Unwrap(err))
+		barFail(bar, err)
 		return err
 	}
 	decryptor := &decryptor{processor}
@@ -362,15 +361,13 @@ func decryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	expectedTag := make([]byte, 64)
 	n, err := decryptor.source.Read(expectedTag)
 	if n != 64 || err != nil {
-		bar.Set("status", "❌")
-		bar.Set("error", err)
+		barFail(bar, err)
 		return err
 	}
 
 	tmpFile, err := os.CreateTemp(filepath.Dir(pathOut), "*.tmp")
 	if err != nil {
-		bar.Set("status", "❌")
-		bar.Set("error", err)
+		barFail(bar, err)
 		return err
 	}
 	defer closeAndRemove(tmpFile)
@@ -381,8 +378,7 @@ func decryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	defer w.Close()
 
 	if _, err := io.Copy(w, decryptor); err != nil {
-		bar.Set("status", "❌")
-		bar.Set("error", err)
+		barFail(bar, err)
 		return err
 	}
 
@@ -392,14 +388,12 @@ func decryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	actualTag := decryptor.hmac.Sum(nil)
 	if !bytes.Equal(actualTag, expectedTag) {
 		err = errors.New("incorrect password or corrupt/forged data")
-		bar.Set("status", "❌")
-		bar.Set("error", err)
+		barFail(bar, err)
 		return err
 	}
 
 	if err := os.Rename(tmpFile.Name(), pathOut); err != nil {
-		bar.Set("status", "❌")
-		bar.Set("error", err)
+		barFail(bar, err)
 		return err
 	}
 
@@ -428,8 +422,7 @@ func encryptFiles(paths []string, outputDir, password string, overwrite bool) (i
 				fileOut = filepath.Join(outputDir, filepath.Base(fileOut))
 			}
 			if _, err := os.Stat(fileOut); !errors.Is(err, os.ErrNotExist) && !overwrite {
-				bar.Set("status", "❌")
-				bar.Set("error", "output already exists")
+				barFail(bar, errors.New("output already exists"))
 				return
 			}
 			if err := encryptFile(fileIn, fileOut, password, bar); err != nil {
@@ -463,8 +456,7 @@ func decryptFiles(paths []string, outputDir, password string, overwrite bool) er
 				fileOut = filepath.Join(outputDir, filepath.Base(fileOut))
 			}
 			if _, err := os.Stat(fileOut); !errors.Is(err, os.ErrNotExist) && !overwrite {
-				bar.Set("status", "❌")
-				bar.Set("error", "output already exists")
+				barFail(bar, errors.New("output already exists"))
 				return
 			}
 			decryptFile(fileIn, fileOut, password, bar)
