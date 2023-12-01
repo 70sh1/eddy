@@ -7,6 +7,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/70sh1/eddy/core"
 	"github.com/urfave/cli/v2"
 	"golang.org/x/term"
 )
@@ -60,7 +61,7 @@ func main() {
 					var numProcessed int64
 					var err error
 					paths := append(cCtx.Args().Tail(), cCtx.Args().First())
-					if paths, outputDir, err = cleanAndCheckPaths(paths, outputDir); err != nil {
+					if paths, outputDir, err = core.CleanAndCheckPaths(paths, outputDir); err != nil {
 						log.Fatal(err)
 					}
 					if !cCtx.IsSet("unsafe-password") {
@@ -79,7 +80,7 @@ func main() {
 							passGenLen = 6
 						}
 						if len(password) < 1 {
-							if password, err = generatePassphrase(passGenLen); err != nil {
+							if password, err = core.GeneratePassphrase(passGenLen); err != nil {
 								log.Fatalf("failed to generate passphrase; %v", err)
 							}
 							noPasswordProvided = true
@@ -87,7 +88,7 @@ func main() {
 					}
 
 					startTime := time.Now()
-					if numProcessed, err = encryptFiles(paths, outputDir, password, overwrite); err != nil {
+					if numProcessed, err = core.EncryptFiles(paths, outputDir, password, overwrite); err != nil {
 						log.Fatal(err)
 					}
 					if noPasswordProvided && (numProcessed > 0) {
@@ -106,7 +107,7 @@ func main() {
 				Action: func(cCtx *cli.Context) error {
 					var err error
 					paths := append(cCtx.Args().Tail(), cCtx.Args().First())
-					if paths, outputDir, err = cleanAndCheckPaths(paths, outputDir); err != nil {
+					if paths, outputDir, err = core.CleanAndCheckPaths(paths, outputDir); err != nil {
 						log.Fatal(err)
 					}
 					if !cCtx.IsSet("unsafe-password") {
@@ -118,7 +119,7 @@ func main() {
 					}
 
 					startTime := time.Now()
-					if err := decryptFiles(paths, outputDir, password, overwrite); err != nil {
+					if err := core.DecryptFiles(paths, outputDir, password, overwrite); err != nil {
 						log.Fatal(err)
 					}
 					deltaTime := time.Since(startTime).Round(time.Millisecond)

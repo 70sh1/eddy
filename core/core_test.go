@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"io"
@@ -164,7 +164,7 @@ func TestGeneratePassphrase(t *testing.T) {
 	var results []string
 	for _, tCase := range cases {
 		for i := 0; i <= 10; i++ {
-			result, err := generatePassphrase(tCase)
+			result, err := GeneratePassphrase(tCase)
 
 			require.NoError(t, err)
 			require.NotContains(t, results, result)
@@ -178,7 +178,7 @@ func TestGeneratePassphrase(t *testing.T) {
 
 func TestGeneratePassphraseError(t *testing.T) {
 	for i := -5; i < 6; i++ {
-		result, err := generatePassphrase(i)
+		result, err := GeneratePassphrase(i)
 		require.Error(t, err)
 		require.Empty(t, result)
 	}
@@ -302,7 +302,7 @@ func TestCleanAndCheckPaths(t *testing.T) {
 		},
 	}
 	for _, tCase := range cases {
-		pathsOut, dirOut, err := cleanAndCheckPaths(tCase.pathsIn, tCase.dirIn)
+		pathsOut, dirOut, err := CleanAndCheckPaths(tCase.pathsIn, tCase.dirIn)
 		require.NoError(t, err)
 		require.Equal(t, tCase.pathsExpected, pathsOut)
 		require.Equal(t, tCase.dirExpected, dirOut)
@@ -364,7 +364,7 @@ func TestCleanAndCheckPathsError(t *testing.T) {
 		},
 	}
 	for _, tCase := range cases {
-		pathsOut, dirOut, err := cleanAndCheckPaths(tCase.pathsIn, tCase.dirIn)
+		pathsOut, dirOut, err := CleanAndCheckPaths(tCase.pathsIn, tCase.dirIn)
 		require.ErrorContains(t, err, tCase.errMsgExpected)
 		require.Equal(t, tCase.pathsExpected, pathsOut)
 		require.Equal(t, tCase.dirExpected, dirOut)
