@@ -107,7 +107,7 @@ func EncryptFiles(paths []string, outputDir, password string, overwrite bool) (i
 		go func() {
 			defer wg.Done()
 			fileOut := fileIn + ".eddy"
-			if len(outputDir) > 0 {
+			if outputDir != "" {
 				fileOut = filepath.Join(outputDir, filepath.Base(fileOut))
 			}
 			if _, err := os.Stat(fileOut); !errors.Is(err, os.ErrNotExist) && !overwrite {

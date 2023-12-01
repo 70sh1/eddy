@@ -171,26 +171,27 @@ func CleanAndCheckPaths(paths []string, outputDir string) ([]string, string, err
 		return nil, "", errors.New("empty path sequence")
 	}
 
-	// Clean all paths and outputDir
+	// Clean paths
 	for i := 0; i < len(paths); i++ {
 		paths[i] = filepath.Clean(paths[i])
-	}
-	outputDir = filepath.Clean(outputDir)
-
-	// Check if outputDir is actually a directory
-	fileInfo, err := os.Stat(outputDir)
-	if err != nil {
-		return nil, "", err
-	}
-	if !fileInfo.IsDir() {
-		return nil, "", fmt.Errorf("'%v' is not a directory", filepath.Base(outputDir))
 	}
 
 	if hasDuplicates(paths) {
 		return nil, "", errors.New("duplicate paths are not allowed")
 	}
 
-	if len(outputDir) > 0 && outputDir != "." {
+	if outputDir != "" {
+		outputDir = filepath.Clean(outputDir)
+
+		// Check if outputDir is actually a directory
+		fileInfo, err := os.Stat(outputDir)
+		if err != nil {
+			return nil, "", err
+		}
+		if !fileInfo.IsDir() {
+			return nil, "", fmt.Errorf("'%s' is not a directory", filepath.Base(outputDir))
+		}
+
 		if hasDuplicateFilenames(paths) {
 			return nil, "", errors.New("duplicate filenames are not allowed with output (-o) flag")
 		}

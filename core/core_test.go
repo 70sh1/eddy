@@ -274,13 +274,13 @@ func TestCleanAndCheckPaths(t *testing.T) {
 			[]string{"C:/t./11est/something.txt", "D:/path/something.txt", "C:////\\/"},
 			[]string{filepath.Clean("C:/t./11est/something.txt"), filepath.Clean("D:/path/something.txt"), filepath.Clean("C:////\\/")},
 			"",
-			".",
+			"",
 		},
 		{
 			[]string{"C:\\something.txt", "H:/qq", "a", "/home/\\//user//test/some"},
 			[]string{filepath.Clean("C:\\something.txt"), filepath.Clean("H:/qq"), filepath.Clean("a"), filepath.Clean("/home/\\//user//test/some")},
 			"",
-			".",
+			"",
 		},
 		{
 			[]string{"file1", "./file2", "/////somewhere\\file3"},
@@ -291,7 +291,7 @@ func TestCleanAndCheckPaths(t *testing.T) {
 		{
 			[]string{"file1"},
 			[]string{filepath.Clean("file1")},
-			"",
+			".",
 			".",
 		},
 		{
@@ -341,7 +341,7 @@ func TestCleanAndCheckPathsError(t *testing.T) {
 			"", // Expecting OS specific err
 		},
 		{
-			[]string{"path/to/something", "path\\////to//\\/something/", "file1"},
+			[]string{"path/to/something", "path\\////to//\\/something2/", "file1"},
 			nil,
 			filepath.Join(dir, "small.txt"),
 			"",

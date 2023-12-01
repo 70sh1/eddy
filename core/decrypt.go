@@ -100,7 +100,7 @@ func DecryptFiles(paths []string, outputDir, password string, overwrite bool) er
 		go func() {
 			defer wg.Done()
 			fileOut := strings.TrimSuffix(fileIn, ".eddy")
-			if len(outputDir) > 0 {
+			if outputDir != "" {
 				fileOut = filepath.Join(outputDir, filepath.Base(fileOut))
 			}
 			if _, err := os.Stat(fileOut); !errors.Is(err, os.ErrNotExist) && !overwrite {
