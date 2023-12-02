@@ -1,7 +1,7 @@
 package core
 
 import (
-	"bytes"
+	"crypto/subtle"
 	"errors"
 	"fmt"
 	"io"
@@ -48,7 +48,7 @@ func verifyFile(r *pb.Reader, dec *decryptor) (bool, error) {
 	}
 
 	actualTag := dec.hmac.Sum(nil)
-	if !bytes.Equal(actualTag, expectedTag) {
+	if subtle.ConstantTimeCompare(expectedTag, actualTag) != 1 {
 		return false, nil
 	}
 
