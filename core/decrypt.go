@@ -3,6 +3,7 @@ package core
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -17,19 +18,41 @@ type decryptor struct {
 }
 
 // Read len(b) bytes from decryptor's source (file) into buffer b, truncate it if n < len(b),
-// update HMAC with slice, XOR the slice,
-// return number of bytes read and error.
+// XOR it and return number of bytes read and error.
 func (d *decryptor) Read(b []byte) (int, error) {
 	n, err := d.source.Read(b)
 	if n > 0 {
 		b = b[:n]
-		if err := d.updateHmac(b); err != nil {
-			return n, err
-		}
 		d.c.XORKeyStream(b, b)
 		return n, err
 	}
 	return 0, io.EOF
+}
+
+// Verify a file via MAC tag. pb.Reader is used in order to show progress on the bar.
+// Should be called before decryption.
+func verifyFile(r *pb.Reader, dec *decryptor) (bool, error) {
+	expectedTag := make([]byte, 64)
+	n, err := dec.source.Read(expectedTag)
+	if n != 64 || err != nil {
+		return false, err
+	}
+
+	if _, err := io.Copy(dec.hmac, r); err != nil {
+		return false, err
+	}
+
+	// Reset file offset back to the header end
+	if _, err := dec.source.Seek(92, 0); err != nil {
+		return false, err
+	}
+
+	actualTag := dec.hmac.Sum(nil)
+	if !bytes.Equal(actualTag, expectedTag) {
+		return false, nil
+	}
+
+	return true, nil
 }
 
 func decryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
@@ -41,12 +64,9 @@ func decryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	decryptor := &decryptor{processor}
 	defer decryptor.source.Close()
 
-	expectedTag := make([]byte, 64)
-	n, err := decryptor.source.Read(expectedTag)
-	if n != 64 || err != nil {
-		barFail(bar, err)
-		return err
-	}
+	bar.Set("filesize", formatSize(decryptor.sourceSize))
+	// We will go through the file twice so the progress bar total should be double the file size
+	bar.SetTotal(decryptor.sourceSize * 2)
 
 	tmpFile, err := os.CreateTemp(filepath.Dir(pathOut), "*.tmp")
 	if err != nil {
@@ -55,25 +75,28 @@ func decryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	}
 	defer closeAndRemove(tmpFile)
 
-	bar.Set("filesize", formatSize(decryptor.sourceSize))
-	bar.SetTotal(decryptor.sourceSize)
-	w := bar.NewProxyWriter(tmpFile)
-	defer w.Close()
+	sourceProxy := bar.NewProxyReader(decryptor.source)
+	defer sourceProxy.Close()
+	fileIsValid, err := verifyFile(sourceProxy, decryptor)
+	if err != nil {
+		barFail(bar, fmt.Errorf("error verifying file; %v", err))
+		return err
+	}
+	if !fileIsValid {
+		err = errors.New("incorrect password or corrupt/forged data")
+		barFail(bar, err)
+		return err
+	}
 
-	if _, err := io.Copy(w, decryptor); err != nil {
+	decryptorProxy := bar.NewProxyReader(decryptor)
+	defer decryptorProxy.Close()
+	if _, err := io.Copy(tmpFile, decryptorProxy); err != nil {
 		barFail(bar, err)
 		return err
 	}
 
 	tmpFile.Close()
 	decryptor.source.Close()
-
-	actualTag := decryptor.hmac.Sum(nil)
-	if !bytes.Equal(actualTag, expectedTag) {
-		err = errors.New("incorrect password or corrupt/forged data")
-		barFail(bar, err)
-		return err
-	}
 
 	if err := os.Rename(tmpFile.Name(), pathOut); err != nil {
 		barFail(bar, err)
