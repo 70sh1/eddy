@@ -17,7 +17,7 @@ type decryptor struct {
 	*processor
 }
 
-// Read len(b) bytes from decryptor's source (file) into buffer b, truncate it if n < len(b),
+// Read up to len(b) bytes from decryptor's source (file) into buffer b, truncate it if n < len(b),
 // XOR it and return number of bytes read and error.
 func (d *decryptor) Read(b []byte) (int, error) {
 	n, err := d.source.Read(b)

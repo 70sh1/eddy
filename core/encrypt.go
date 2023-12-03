@@ -14,7 +14,7 @@ type encryptor struct {
 	*processor
 }
 
-// Read len(b) bytes from encryptor's source (file) into buffer b, truncate it if n < len(b),
+// Read up to len(b) bytes from encryptor's source (file) into buffer b, truncate it if n < len(b),
 // XOR it, update the encryptor's HMAC with the resulting slice,
 // return number of bytes read and error.
 func (e *encryptor) Read(b []byte) (int, error) {
