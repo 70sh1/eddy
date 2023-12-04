@@ -33,9 +33,6 @@ func (e *encryptor) Read(b []byte) (int, error) {
 func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	processor, err := NewProcessor(pathIn, password, "enc")
 	if err != nil {
-		// Moving this repetitive line to this function's call would be nice and much cleaner,
-		// but then the bar doesn't update properly for some reason.
-		barFail(bar, err)
 		return err
 	}
 	encryptor := &encryptor{processor}
@@ -43,7 +40,6 @@ func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 
 	tmpFile, err := os.CreateTemp(filepath.Dir(pathOut), "*.tmp")
 	if err != nil {
-		barFail(bar, err)
 		return err
 	}
 	defer closeAndRemove(tmpFile)
@@ -55,7 +51,6 @@ func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	header = append(header, tagPlaceholder...)
 
 	if _, err := tmpFile.Write(header); err != nil {
-		barFail(bar, err)
 		return err
 	}
 
@@ -65,29 +60,23 @@ func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	defer w.Close()
 
 	if _, err := io.Copy(w, encryptor); err != nil {
-		barFail(bar, err)
 		return err
 	}
 
 	tag := encryptor.hmac.Sum(nil)
 	if _, err := tmpFile.Seek(int64(len(encryptor.nonce)+len(encryptor.hmacSalt)), 0); err != nil {
-		barFail(bar, err)
 		return err
 	}
 	if _, err := tmpFile.Write(tag); err != nil {
-		barFail(bar, err)
 		return err
 	}
 
 	tmpFile.Close()
 	encryptor.source.Close()
 	if err := os.Rename(tmpFile.Name(), pathOut); err != nil {
-		barFail(bar, err)
 		return err
 	}
 
-	bar.SetCurrent(bar.Total())
-	bar.Set("status", "🔒")
 	return nil
 }
 
@@ -115,8 +104,11 @@ func EncryptFiles(paths []string, outputDir, password string, overwrite bool) (i
 				return
 			}
 			if err := encryptFile(fileIn, fileOut, password, bar); err != nil {
+				barFail(bar, err)
 				return
 			}
+			bar.SetCurrent(bar.Total())
+			bar.Set("status", "🔒")
 			numProcessed += 1
 		}()
 	}

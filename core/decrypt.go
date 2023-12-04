@@ -58,7 +58,6 @@ func verifyFile(r *pb.Reader, dec *decryptor) (bool, error) {
 func decryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	processor, err := NewProcessor(pathIn, password, "dec")
 	if err != nil {
-		barFail(bar, err)
 		return err
 	}
 	decryptor := &decryptor{processor}
@@ -70,7 +69,6 @@ func decryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 
 	tmpFile, err := os.CreateTemp(filepath.Dir(pathOut), "*.tmp")
 	if err != nil {
-		barFail(bar, err)
 		return err
 	}
 	defer closeAndRemove(tmpFile)
@@ -79,19 +77,16 @@ func decryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	defer sourceProxy.Close()
 	fileIsValid, err := verifyFile(sourceProxy, decryptor)
 	if err != nil {
-		barFail(bar, fmt.Errorf("error verifying file; %v", err))
-		return err
+		return fmt.Errorf("error verifying file; %v", err)
 	}
 	if !fileIsValid {
 		err = errors.New("incorrect password or corrupt/forged data")
-		barFail(bar, err)
 		return err
 	}
 
 	decryptorProxy := bar.NewProxyReader(decryptor)
 	defer decryptorProxy.Close()
 	if _, err := io.Copy(tmpFile, decryptorProxy); err != nil {
-		barFail(bar, err)
 		return err
 	}
 
@@ -99,12 +94,9 @@ func decryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	decryptor.source.Close()
 
 	if err := os.Rename(tmpFile.Name(), pathOut); err != nil {
-		barFail(bar, err)
 		return err
 	}
 
-	bar.SetCurrent(bar.Total())
-	bar.Set("status", "🔓")
 	return nil
 }
 
@@ -130,7 +122,12 @@ func DecryptFiles(paths []string, outputDir, password string, overwrite bool) er
 				barFail(bar, errors.New("output already exists"))
 				return
 			}
-			decryptFile(fileIn, fileOut, password, bar)
+			if err := decryptFile(fileIn, fileOut, password, bar); err != nil {
+				barFail(bar, err)
+				return
+			}
+			bar.SetCurrent(bar.Total())
+			bar.Set("status", "🔓")
 		}()
 	}
 
