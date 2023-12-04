@@ -114,6 +114,13 @@ func (p *processor) updateHmac(data []byte) error {
 	return nil
 }
 
+func deriveKey(password string, salt []byte) ([]byte, error) {
+	if len(salt) != 16 {
+		return nil, errors.New("wrong scrypt salt length")
+	}
+	return scrypt.Key([]byte(password), salt, 65536, 8, 1, 32) // 65536 == 2^16
+}
+
 // Check whenever given slice of strings contains duplicates.
 func hasDuplicates(s []string) bool {
 	a := make(map[string]bool)
@@ -165,41 +172,6 @@ func formatSize(b int64) string {
 	}
 }
 
-func CleanAndCheckPaths(paths []string, outputDir string) ([]string, string, error) {
-
-	if len(paths) == 1 && paths[0] == "" {
-		return nil, "", errors.New("empty path sequence")
-	}
-
-	// Clean paths
-	for i := 0; i < len(paths); i++ {
-		paths[i] = filepath.Clean(paths[i])
-	}
-
-	if hasDuplicates(paths) {
-		return nil, "", errors.New("duplicate paths are not allowed")
-	}
-
-	if outputDir != "" {
-		outputDir = filepath.Clean(outputDir)
-
-		// Check if outputDir is actually a directory
-		fileInfo, err := os.Stat(outputDir)
-		if err != nil {
-			return nil, "", err
-		}
-		if !fileInfo.IsDir() {
-			return nil, "", fmt.Errorf("'%s' is not a directory", filepath.Base(outputDir))
-		}
-
-		if hasDuplicateFilenames(paths) {
-			return nil, "", errors.New("duplicate filenames are not allowed with output (-o) flag")
-		}
-	}
-
-	return paths, outputDir, nil
-}
-
 // Create new progress bar pool.
 func newBarPool(paths []string) (pool *pb.Pool, bars []*pb.ProgressBar) {
 	barTmpl := `{{ string . "status" }} {{ string . "filename" }} {{ string . "filesize" }} {{ bar . "[" "-"  ">" " " "]" }} {{ string . "error" }}`
@@ -238,9 +210,37 @@ func GeneratePassphrase(length int) (string, error) {
 	return strings.Join(passhprase, "-"), nil
 }
 
-func deriveKey(password string, salt []byte) ([]byte, error) {
-	if len(salt) != 16 {
-		return nil, errors.New("wrong scrypt salt length")
+func CleanAndCheckPaths(paths []string, outputDir string) ([]string, string, error) {
+
+	if len(paths) == 1 && paths[0] == "" {
+		return nil, "", errors.New("empty path sequence")
 	}
-	return scrypt.Key([]byte(password), salt, 65536, 8, 1, 32) // 65536 == 2^16
+
+	// Clean paths
+	for i := 0; i < len(paths); i++ {
+		paths[i] = filepath.Clean(paths[i])
+	}
+
+	if hasDuplicates(paths) {
+		return nil, "", errors.New("duplicate paths are not allowed")
+	}
+
+	if outputDir != "" {
+		outputDir = filepath.Clean(outputDir)
+
+		// Check if outputDir is actually a directory
+		fileInfo, err := os.Stat(outputDir)
+		if err != nil {
+			return nil, "", err
+		}
+		if !fileInfo.IsDir() {
+			return nil, "", fmt.Errorf("'%s' is not a directory", filepath.Base(outputDir))
+		}
+
+		if hasDuplicateFilenames(paths) {
+			return nil, "", errors.New("duplicate filenames are not allowed with output (-o) flag")
+		}
+	}
+
+	return paths, outputDir, nil
 }
