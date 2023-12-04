@@ -1,1 +1,2 @@
 * text=auto
+*.go text eol=LF
