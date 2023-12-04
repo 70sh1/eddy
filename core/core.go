@@ -176,7 +176,7 @@ func formatSize(b int64) string {
 func newBarPool(paths []string) (pool *pb.Pool, bars []*pb.ProgressBar) {
 	barTmpl := `{{ string . "status" }} {{ string . "filename" }} {{ string . "filesize" }} {{ bar . "[" "-"  ">" " " "]" }} {{ string . "error" }}`
 	for _, path := range paths {
-		bar := pb.New64(1).SetTemplateString(barTmpl).SetWidth(80)
+		bar := pb.New64(1).SetTemplateString(barTmpl).SetWidth(90)
 		bar.Set("status", "  ")
 		bar.Set("filename", filenameOverflow(filepath.Base(path), 25))
 		bars = append(bars, bar)
