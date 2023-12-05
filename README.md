@@ -8,7 +8,7 @@
 <a href="https://github.com/70sh1/eddy/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-green"></a>
 </p>
 
-_eddy_ is a simple and fast CLI file encryption tool. It features concurrent file processing while ensuring data authenticity and plausible deniability. It is also capable of generating secure [passphrases](https://www.eff.org/dice).
+_eddy_ is a simple and fast CLI file encryption tool. It features concurrent file processing while ensuring data authenticity and plausible deniability. It is also capable of generating secure [passphrases](#passphrase-generation).
 
 ### Examples
 ```
@@ -47,6 +47,9 @@ If you have [Go](https://go.dev/dl/) installed, the simplest way to get _eddy_ i
 ```shell
 go install github.com/70sh1/eddy@latest
 ```
+## Passphrase generation
+If no password (empty one) was provided during encryption (this includes lack of `--unsafe-password` flag and leaving interactive password prompt empty), _eddy_ will generate and use a secure passphrase (length of 6 by default). The length can be adjusted using --passgenlen (-g) flag. The passphrase is generated using cryptohraphically secure PRNG provided by the OS and EFF's long wordlist. You can read more about passphrases [here](https://www.eff.org/dice).
+
 ## Tips & notes
 - The maximum file size is **256 GiB**.
 - It is safe to rename any files that are encrypted with _eddy_.
