@@ -28,11 +28,6 @@ func main() {
 		Suggest:                true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:        "unsafe-password",
-				Destination: &password,
-				Usage:       "replaces password prompt with the provided password",
-			},
-			&cli.StringFlag{
 				Name:        "output",
 				Aliases:     []string{"o"},
 				Destination: &outputDir,
@@ -56,6 +51,11 @@ func main() {
 				Aliases:     []string{"n"},
 				Destination: &noEmoji,
 				Usage:       "disable emojis in output",
+			},
+			&cli.StringFlag{
+				Name:        "unsafe-password",
+				Destination: &password,
+				Usage:       "replaces password prompt with the provided password",
 			},
 		},
 		Commands: []*cli.Command{
