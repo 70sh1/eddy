@@ -378,7 +378,7 @@ func TestNewBarPool(t *testing.T) {
 		{"file5"},
 	}
 	for _, tCase := range cases {
-		barPool, bars := newBarPool(tCase)
+		barPool, bars := newBarPool(tCase, false)
 		require.Len(t, bars, len(tCase))
 		require.NotNil(t, barPool)
 		for i := 0; i < len(tCase); i++ {

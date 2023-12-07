@@ -80,11 +80,11 @@ func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	return nil
 }
 
-func EncryptFiles(paths []string, outputDir, password string, overwrite bool) (int64, error) {
+func EncryptFiles(paths []string, outputDir, password string, overwrite bool, noEmoji bool) (int64, error) {
 	var wg sync.WaitGroup
 	var numProcessed int64
 
-	barPool, bars := newBarPool(paths)
+	barPool, bars := newBarPool(paths, noEmoji)
 	if err := barPool.Start(); err != nil {
 		return 0, err
 	}
@@ -100,11 +100,11 @@ func EncryptFiles(paths []string, outputDir, password string, overwrite bool) (i
 				fileOut = filepath.Join(outputDir, filepath.Base(fileOut))
 			}
 			if _, err := os.Stat(fileOut); !errors.Is(err, os.ErrNotExist) && !overwrite {
-				barFail(bar, errors.New("output already exists"))
+				barFail(bar, errors.New("output already exists"), noEmoji)
 				return
 			}
 			if err := encryptFile(fileIn, fileOut, password, bar); err != nil {
-				barFail(bar, err)
+				barFail(bar, err, noEmoji)
 				return
 			}
 			bar.SetCurrent(bar.Total())

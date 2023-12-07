@@ -100,10 +100,10 @@ func decryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	return nil
 }
 
-func DecryptFiles(paths []string, outputDir, password string, overwrite bool) error {
+func DecryptFiles(paths []string, outputDir, password string, overwrite bool, noEmoji bool) error {
 	var wg sync.WaitGroup
 
-	barPool, bars := newBarPool(paths)
+	barPool, bars := newBarPool(paths, noEmoji)
 	if err := barPool.Start(); err != nil {
 		return err
 	}
@@ -119,11 +119,11 @@ func DecryptFiles(paths []string, outputDir, password string, overwrite bool) er
 				fileOut = filepath.Join(outputDir, filepath.Base(fileOut))
 			}
 			if _, err := os.Stat(fileOut); !errors.Is(err, os.ErrNotExist) && !overwrite {
-				barFail(bar, errors.New("output already exists"))
+				barFail(bar, errors.New("output already exists"), noEmoji)
 				return
 			}
 			if err := decryptFile(fileIn, fileOut, password, bar); err != nil {
-				barFail(bar, err)
+				barFail(bar, err, noEmoji)
 				return
 			}
 			bar.SetCurrent(bar.Total())

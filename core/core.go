@@ -174,19 +174,19 @@ func formatSize(b int64) string {
 }
 
 // Create new progress bar pool.
-func newBarPool(paths []string) (pool *pb.Pool, bars []*pb.ProgressBar) {
+func newBarPool(paths []string, noEmoji bool) (pool *pb.Pool, bars []*pb.ProgressBar) {
 	barTmpl := `{{ string . "status" }} {{ string . "filename" }} {{ string . "filesize" }} {{ bar . "[" "-"  ">" " " "]" }} {{ string . "error" }}`
 	for _, path := range paths {
 		bar := pb.New64(1).SetTemplateString(barTmpl).SetWidth(90)
-		bar.Set("status", "  ")
+		bar.Set("status", ConditionalPrefix("  ", "", noEmoji))
 		bar.Set("filename", filenameOverflow(filepath.Base(path), 25))
 		bars = append(bars, bar)
 	}
 	return pb.NewPool(bars...), bars
 }
 
-func barFail(bar *pb.ProgressBar, err error) {
-	bar.Set("status", "❌")
+func barFail(bar *pb.ProgressBar, err error, noEmoji bool) {
+	bar.Set("status", ConditionalPrefix("❌", "", noEmoji))
 	bar.Set("error", err)
 }
 
@@ -244,4 +244,11 @@ func CleanAndCheckPaths(paths []string, outputDir string) ([]string, string, err
 	}
 
 	return paths, outputDir, nil
+}
+
+func ConditionalPrefix(prefix string, s string, withoutPrefix bool) string {
+	if withoutPrefix {
+		return s
+	}
+	return prefix + s
 }
