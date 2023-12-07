@@ -153,10 +153,11 @@ func closeAndRemove(f *os.File) {
 }
 
 func filenameOverflow(s string, n int) string {
-	if len(s) > n {
-		return s[:n] + "..."
+	r := []rune(s)
+	if len(r) < n {
+		return s
 	}
-	return s
+	return string(r[:n]) + "..."
 }
 
 func formatSize(b int64) string {
