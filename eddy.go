@@ -37,18 +37,18 @@ func main() {
 				Destination: &outputDir,
 				Usage:       "specify output directory",
 			},
-			&cli.BoolFlag{
-				Name:        "overwrite",
-				Aliases:     []string{"w"},
-				Destination: &overwrite,
-				Usage:       "overwrite existing files",
-			},
 			&cli.IntFlag{
 				Name:        "passgenlen",
 				Aliases:     []string{"g"},
 				Destination: &passGenLen,
 				Usage:       "specify generated passphrase length",
 				DefaultText: "6",
+			},
+			&cli.BoolFlag{
+				Name:        "overwrite",
+				Aliases:     []string{"w"},
+				Destination: &overwrite,
+				Usage:       "overwrite existing files",
 			},
 		},
 		Commands: []*cli.Command{
