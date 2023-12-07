@@ -36,6 +36,8 @@ eddy --unsafe-password supeR-$ecr3t enc "D:/stuff/secret.txt" secret2.txt
 
 `--overwrite, -w` - enable overwrite existing files.
 
+`--no-emoji, -n` - disable emojis in output.
+
 `--passgenlen, -g` - specify generated passphrase length (6 is the minimum). 
 
 `--unsafe-password` - replace interactive password prompt with the provided value. Intended for scripts/automation and reading password from environment variables. The "unsafe" prefix here is to indicate that the provided value will likely stay in the shell command history which is not safe.
