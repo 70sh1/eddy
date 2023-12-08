@@ -222,7 +222,7 @@ func TestNewProcessor(t *testing.T) {
 		require.NotNil(t, processor.source)
 		require.Equal(t, fileSizes[i], processor.sourceSize)
 		require.Len(t, processor.nonce, chacha20.NonceSize)
-		require.Len(t, processor.hmacSalt, 16)
+		require.Len(t, processor.blakeSalt, 16)
 	}
 
 	processor, err := NewProcessor(filepath.Join(dir, "small.txt.eddy"), password, "dec")
@@ -232,7 +232,7 @@ func TestNewProcessor(t *testing.T) {
 	require.NotNil(t, processor.source)
 	require.Equal(t, int64(116), processor.sourceSize)
 	require.Equal(t, []byte{159, 21, 91, 197, 188, 218, 176, 90, 10, 110, 138, 23}, processor.nonce)
-	require.Equal(t, []byte{39, 152, 144, 26, 35, 122, 186, 87, 36, 248, 3, 230, 164, 17, 138, 182}, processor.hmacSalt)
+	require.Equal(t, []byte{39, 152, 144, 26, 35, 122, 186, 87, 36, 248, 3, 230, 164, 17, 138, 182}, processor.blakeSalt)
 }
 
 func TestNewProcessorError(t *testing.T) {

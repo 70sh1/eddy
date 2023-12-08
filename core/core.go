@@ -32,7 +32,7 @@ type processor struct {
 	blake      hash.Hash
 	source     *os.File
 	nonce      []byte
-	hmacSalt   []byte
+	blakeSalt  []byte
 	sourceSize int64
 }
 
@@ -103,13 +103,13 @@ func NewProcessor(sourcePath string, password string, mode string) (*processor, 
 	return &processor{c, blake, file, nonce, salt, fileSize}, nil
 }
 
-func (p *processor) updateHmac(data []byte) error {
+func (p *processor) updateMac(data []byte) error {
 	n, err := p.blake.Write(data)
 	if err != nil {
 		return err
 	}
 	if n != len(data) {
-		return errors.New("could not write all bytes to hmac")
+		return errors.New("could not write all bytes to mac")
 	}
 	return nil
 }

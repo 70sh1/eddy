@@ -15,14 +15,14 @@ type encryptor struct {
 }
 
 // Read up to len(b) bytes from encryptor's source (file) into buffer b, truncate it if n < len(b),
-// XOR it, update the encryptor's HMAC with the resulting slice,
+// XOR it, update the encryptor's MAC with the resulting slice,
 // return number of bytes read and error.
 func (e *encryptor) Read(b []byte) (int, error) {
 	n, err := e.source.Read(b)
 	if n > 0 {
 		b = b[:n]
 		e.c.XORKeyStream(b, b)
-		if err := e.updateHmac(b); err != nil {
+		if err := e.updateMac(b); err != nil {
 			return n, err
 		}
 		return n, err
@@ -47,7 +47,7 @@ func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	var header []byte
 	tagPlaceholder := make([]byte, encryptor.blake.Size())
 	header = append(header, encryptor.nonce...)
-	header = append(header, encryptor.hmacSalt...)
+	header = append(header, encryptor.blakeSalt...)
 	header = append(header, tagPlaceholder...)
 
 	if _, err := tmpFile.Write(header); err != nil {
@@ -64,7 +64,7 @@ func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	}
 
 	tag := encryptor.blake.Sum(nil)
-	if _, err := tmpFile.Seek(int64(len(encryptor.nonce)+len(encryptor.hmacSalt)), 0); err != nil {
+	if _, err := tmpFile.Seek(int64(len(encryptor.nonce)+len(encryptor.blakeSalt)), 0); err != nil {
 		return err
 	}
 	if _, err := tmpFile.Write(tag); err != nil {
