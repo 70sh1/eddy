@@ -57,7 +57,7 @@ If no password (empty one) was provided during encryption (this includes lack of
 - It is safe to rename any files that are encrypted with _eddy_.
 
 ## How it works
-_eddy_ leverages `ChaCha20` for encryption paired with `Blake2b` for data authentication (HMAC). The `scrypt` KDF is used for producing keys.
+_eddy_ leverages `ChaCha20` for encryption paired with keyed `Blake2b` for data authentication (MAC). The `scrypt` KDF is used for producing keys.
 
 ## Acknowledgements
 [urfave/cli](https://github.com/urfave/cli) - CLI framework.

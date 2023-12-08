@@ -29,7 +29,7 @@ var embedded embed.FS
 
 type processor struct {
 	c          *chacha20.Cipher
-	hmac       hash.Hash
+	blake      hash.Hash
 	source     *os.File
 	nonce      []byte
 	hmacSalt   []byte
@@ -104,7 +104,7 @@ func NewProcessor(sourcePath string, password string, mode string) (*processor, 
 }
 
 func (p *processor) updateHmac(data []byte) error {
-	n, err := p.hmac.Write(data)
+	n, err := p.blake.Write(data)
 	if err != nil {
 		return err
 	}

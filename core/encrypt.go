@@ -45,7 +45,7 @@ func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	defer closeAndRemove(tmpFile)
 
 	var header []byte
-	tagPlaceholder := make([]byte, encryptor.hmac.Size())
+	tagPlaceholder := make([]byte, encryptor.blake.Size())
 	header = append(header, encryptor.nonce...)
 	header = append(header, encryptor.hmacSalt...)
 	header = append(header, tagPlaceholder...)
@@ -63,7 +63,7 @@ func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 		return err
 	}
 
-	tag := encryptor.hmac.Sum(nil)
+	tag := encryptor.blake.Sum(nil)
 	if _, err := tmpFile.Seek(int64(len(encryptor.nonce)+len(encryptor.hmacSalt)), 0); err != nil {
 		return err
 	}

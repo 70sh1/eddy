@@ -38,7 +38,7 @@ func verifyFile(r *pb.Reader, dec *decryptor) (bool, error) {
 		return false, err
 	}
 
-	if _, err := io.Copy(dec.hmac, r); err != nil {
+	if _, err := io.Copy(dec.blake, r); err != nil {
 		return false, err
 	}
 
@@ -47,7 +47,7 @@ func verifyFile(r *pb.Reader, dec *decryptor) (bool, error) {
 		return false, err
 	}
 
-	actualTag := dec.hmac.Sum(nil)
+	actualTag := dec.blake.Sum(nil)
 	if subtle.ConstantTimeCompare(expectedTag, actualTag) != 1 {
 		return false, nil
 	}
