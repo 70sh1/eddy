@@ -100,6 +100,7 @@ func main() {
 						log.Fatal(err)
 					}
 					if noPasswordProvided && (numProcessed > 0) {
+						fmt.Println()
 						fmt.Printf(core.ConditionalPrefix("🔑 ", "NOTE: This passphrase was generated and used: '%v'\n", noEmoji), password)
 					}
 					deltaTime := time.Since(startTime).Round(time.Millisecond)
