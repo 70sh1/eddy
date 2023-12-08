@@ -120,7 +120,6 @@ func main() {
 						log.Fatal(err)
 					}
 					if !cCtx.IsSet("unsafe-password") {
-						var err error
 						password, err = scanPassword(core.ConditionalPrefix("🔑 ", "Password: ", noEmoji))
 						if err != nil {
 							log.Fatal(err)
