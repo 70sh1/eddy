@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"hash"
+	"io"
 	"math/big"
 	"os"
 	"path/filepath"
@@ -60,9 +61,9 @@ func NewProcessor(sourcePath string, password string, mode string) (*processor, 
 	nonce := make([]byte, chacha20.NonceSize)
 	var n int
 	if mode == "enc" {
-		n, err = rand.Read(nonce)
+		n, err = io.ReadFull(rand.Reader, nonce)
 	} else {
-		n, err = file.Read(nonce)
+		n, err = io.ReadFull(file, nonce)
 	}
 	if n != chacha20.NonceSize {
 		file.Close()
@@ -71,9 +72,9 @@ func NewProcessor(sourcePath string, password string, mode string) (*processor, 
 
 	salt := make([]byte, 16)
 	if mode == "enc" {
-		n, err = rand.Read(salt)
+		n, err = io.ReadFull(rand.Reader, salt)
 	} else {
-		n, err = file.Read(salt)
+		n, err = io.ReadFull(file, salt)
 	}
 	if n != 16 {
 		file.Close()
