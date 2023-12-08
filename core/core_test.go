@@ -215,7 +215,7 @@ func TestNewProcessor(t *testing.T) {
 	fileSizes := []int64{10_485_760, 24}
 
 	for i := 0; i < len(files); i++ {
-		processor, err := NewProcessor(files[i], password, "enc")
+		processor, err := NewProcessor(files[i], password, ENCRYPTION)
 		require.NoError(t, err)
 		processor.source.Close()
 		require.NotNil(t, processor.c)
@@ -225,7 +225,7 @@ func TestNewProcessor(t *testing.T) {
 		require.Len(t, processor.blakeSalt, 16)
 	}
 
-	processor, err := NewProcessor(filepath.Join(dir, "small.txt.eddy"), password, "dec")
+	processor, err := NewProcessor(filepath.Join(dir, "small.txt.eddy"), password, DECRYPTION)
 	processor.source.Close()
 	require.NoError(t, err)
 	require.NotNil(t, processor.c)
@@ -238,7 +238,7 @@ func TestNewProcessor(t *testing.T) {
 func TestNewProcessorError(t *testing.T) {
 	dir := testFilesSetup()
 	defer testFilesCleanup(dir)
-	modes := []string{"enc", "dec"}
+	modes := []mode{ENCRYPTION, DECRYPTION}
 
 	for _, mode := range modes {
 		processor, err := NewProcessor(filepath.Join(dir, "this-doesnt-exist"), password, mode)
@@ -252,11 +252,11 @@ func TestNewProcessorError(t *testing.T) {
 		require.Nil(t, processor)
 	}
 
-	processor, err := NewProcessor(filepath.Join(dir, "empty.txt"), password, "dec")
+	processor, err := NewProcessor(filepath.Join(dir, "empty.txt"), password, DECRYPTION)
 	require.ErrorContains(t, err, "error generating/reading nonce")
 	require.Nil(t, processor)
 
-	processor, err = NewProcessor(filepath.Join(dir, "too-short.txt.eddy"), password, "dec")
+	processor, err = NewProcessor(filepath.Join(dir, "too-short.txt.eddy"), password, DECRYPTION)
 	require.ErrorContains(t, err, "error generating/reading salt")
 	require.Nil(t, processor)
 }
@@ -464,7 +464,7 @@ func TestDecryptorRead(t *testing.T) {
 	dir := testFilesSetup()
 	defer testFilesCleanup(dir)
 	source := filepath.Join(dir, "small.txt.eddy")
-	processor, err := NewProcessor(source, password, "dec")
+	processor, err := NewProcessor(source, password, DECRYPTION)
 	panicIfErr(err)
 	defer processor.source.Close()
 	decryptor := &decryptor{processor}
@@ -484,7 +484,7 @@ func TestDecryptorReadEOF(t *testing.T) {
 	dir := testFilesSetup()
 	defer testFilesCleanup(dir)
 	source := filepath.Join(dir, "header-only.txt.eddy")
-	processor, err := NewProcessor(source, password, "dec")
+	processor, err := NewProcessor(source, password, DECRYPTION)
 	panicIfErr(err)
 	defer processor.source.Close()
 	decryptor := &decryptor{processor}

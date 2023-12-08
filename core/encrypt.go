@@ -31,7 +31,7 @@ func (e *encryptor) Read(b []byte) (int, error) {
 }
 
 func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
-	processor, err := NewProcessor(pathIn, password, "enc")
+	processor, err := NewProcessor(pathIn, password, ENCRYPTION)
 	if err != nil {
 		return err
 	}
