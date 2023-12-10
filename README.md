@@ -50,12 +50,13 @@ If you have [Go](https://go.dev/dl/) installed, the simplest way to get _eddy_ i
 ```shell
 go install github.com/70sh1/eddy@latest
 ```
+
 ## Passphrase generation
 If no password (empty one) was provided during encryption (this includes lack of `--unsafe-password` flag and leaving interactive password prompt empty), _eddy_ will generate and use a secure passphrase (length of 6 by default). The length can be adjusted using `--passgenlen (-g)` flag. Additionally, if this flag is provided, the password prompt will be skipped automatically. The passphrase is generated using cryptohraphically secure PRNG provided by the OS and EFF's long wordlist. You can read more about passphrases [here](https://www.eff.org/dice).
 
 ## Tips & notes
 - The maximum file size is **256 GiB**.
-- It is safe to rename any files that are encrypted with _eddy_.
+- It is safe to rename any files that are encrypted with _eddy_. This means that decryption does not require `.eddy` file extension.
 
 ## How it works
 _eddy_ leverages `ChaCha20` for encryption paired with keyed `Blake2b` for data authentication (MAC). The `scrypt` KDF is used for producing keys.
