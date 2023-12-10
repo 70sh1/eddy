@@ -34,7 +34,7 @@ eddy --unsafe-password supeR-$ecr3t enc "D:/stuff/secret.txt" secret2.txt
 ### Flags
 `--output, -o` - specify output directory.
 
-`--passgenlen, -g` - specify generated passphrase length (6 is the minimum). 
+`--passgenlen, -g` - specify generated passphrase length (6 is the minimum). Ignored in decryption mode.
 
 `--overwrite, -w` - enable overwrite existing files.
 
