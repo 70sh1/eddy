@@ -22,8 +22,8 @@ import (
 type mode int
 
 const (
-	ENCRYPTION mode = iota
-	DECRYPTION
+	encryption mode = iota
+	decryption
 )
 
 const (
@@ -45,7 +45,7 @@ type processor struct {
 }
 
 // Create new ChaCha20-Blake2b processor with underlying "source" file.
-func NewProcessor(sourcePath string, password string, mode mode) (*processor, error) {
+func newProcessor(sourcePath string, password string, mode mode) (*processor, error) {
 	file, err := os.Open(sourcePath)
 	if err != nil {
 		file.Close()
@@ -67,7 +67,7 @@ func NewProcessor(sourcePath string, password string, mode mode) (*processor, er
 
 	nonce := make([]byte, chacha20.NonceSize)
 	var n int
-	if mode == ENCRYPTION {
+	if mode == encryption {
 		n, err = io.ReadFull(rand.Reader, nonce)
 	} else {
 		n, err = io.ReadFull(file, nonce)
@@ -78,7 +78,7 @@ func NewProcessor(sourcePath string, password string, mode mode) (*processor, er
 	}
 
 	salt := make([]byte, 16)
-	if mode == ENCRYPTION {
+	if mode == encryption {
 		n, err = io.ReadFull(rand.Reader, salt)
 	} else {
 		n, err = io.ReadFull(file, salt)

@@ -31,7 +31,7 @@ func (e *encryptor) Read(b []byte) (int, error) {
 }
 
 func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
-	processor, err := NewProcessor(pathIn, password, ENCRYPTION)
+	processor, err := newProcessor(pathIn, password, encryption)
 	if err != nil {
 		return err
 	}
@@ -109,7 +109,7 @@ func EncryptFiles(paths []string, outputDir, password string, overwrite bool, no
 			}
 			bar.SetCurrent(bar.Total())
 			bar.Set("status", ConditionalPrefix("🔒", "", noEmoji))
-			numProcessed += 1
+			numProcessed++
 		}()
 	}
 
