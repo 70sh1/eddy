@@ -30,6 +30,17 @@ func (e *encryptor) Read(b []byte) (int, error) {
 	return 0, io.EOF
 }
 
+func (p *encryptor) updateMac(data []byte) error {
+	n, err := p.blake.Write(data)
+	if err != nil {
+		return err
+	}
+	if n != len(data) {
+		return errors.New("could not write all bytes to mac")
+	}
+	return nil
+}
+
 func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	processor, err := newProcessor(pathIn, password, encryption)
 	if err != nil {

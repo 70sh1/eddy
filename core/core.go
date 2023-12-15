@@ -110,17 +110,6 @@ func newProcessor(sourcePath string, password string, mode mode) (*processor, er
 	return &processor{c, blake, file, nonce, salt, fileSize}, nil
 }
 
-func (p *processor) updateMac(data []byte) error {
-	n, err := p.blake.Write(data)
-	if err != nil {
-		return err
-	}
-	if n != len(data) {
-		return errors.New("could not write all bytes to mac")
-	}
-	return nil
-}
-
 // Derives a key using scrypt KDF.
 func deriveKey(password string, salt []byte) ([]byte, error) {
 	defer debug.FreeOSMemory() // Free memory held after scrypt call
