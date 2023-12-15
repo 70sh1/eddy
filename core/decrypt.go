@@ -29,7 +29,7 @@ func (d *decryptor) Read(b []byte) (int, error) {
 	return 0, io.EOF
 }
 
-// Calculates the MAC tag of the give file and compares it with the expected tag.
+// Calculates the MAC tag of the given file and compares it with the expected tag.
 // Should be called before decryption.
 func verifyFile(dec *decryptor, expectedTag []byte, bar *pb.ProgressBar) (bool, error) {
 	sourceProxy := bar.NewProxyReader(dec.source)
