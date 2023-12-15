@@ -85,7 +85,6 @@ func decryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	}
 
 	decryptorProxy := bar.NewProxyReader(decryptor)
-	defer decryptorProxy.Close()
 	if _, err := io.Copy(tmpFile, decryptorProxy); err != nil {
 		return err
 	}

@@ -93,7 +93,6 @@ func newProcessor(sourcePath string, password string, mode mode) (*processor, er
 		file.Close()
 		return nil, err
 	}
-	debug.FreeOSMemory() // Free memory held after scrypt call
 
 	c, err := chacha20.NewUnauthenticatedCipher(key, nonce)
 	if err != nil {
@@ -123,6 +122,7 @@ func (p *processor) updateMac(data []byte) error {
 }
 
 func deriveKey(password string, salt []byte) ([]byte, error) {
+	defer debug.FreeOSMemory() // Free memory held after scrypt call
 	if len(salt) != 16 {
 		return nil, errors.New("wrong scrypt salt length")
 	}
@@ -220,12 +220,10 @@ func GeneratePassphrase(length int) (string, error) {
 }
 
 func CleanAndCheckPaths(paths []string, outputDir string) ([]string, string, error) {
-
 	if len(paths) == 1 && paths[0] == "" {
 		return nil, "", errors.New("empty path sequence")
 	}
 
-	// Clean paths
 	for i := 0; i < len(paths); i++ {
 		paths[i] = filepath.Clean(paths[i])
 	}
@@ -236,8 +234,6 @@ func CleanAndCheckPaths(paths []string, outputDir string) ([]string, string, err
 
 	if outputDir != "" {
 		outputDir = filepath.Clean(outputDir)
-
-		// Check if outputDir is actually a directory
 		fileInfo, err := os.Stat(outputDir)
 		if err != nil {
 			return nil, "", err
