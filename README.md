@@ -2,10 +2,14 @@
 
 
 <p align="center">
-<a href="https://go.dev"><img alt="Go version" src="https://img.shields.io/github/go-mod/go-version/70sh1/eddy"></a>
-<a href="https://goreportcard.com/report/github.com/70sh1/eddy"><img alt="Go code report card" src="https://goreportcard.com/badge/github.com/70sh1/eddy"></a>
-<a href="https://github.com/70sh1/eddy/actions"><img alt="Tests status" src="https://github.com/70sh1/eddy/actions/workflows/run-tests.yml/badge.svg"></a>
-<a href="https://github.com/70sh1/eddy/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-green"></a>
+  <a href="https://go.dev"><img alt="Go version" src="https://img.shields.io/github/go-mod/go-version/70sh1/eddy"></a>
+  <a href="https://goreportcard.com/report/github.com/70sh1/eddy"><img alt="Go code report card" src="https://goreportcard.com/badge/github.com/70sh1/eddy"></a>
+  <a href="https://github.com/70sh1/eddy/actions"><img alt="Tests status" src="https://github.com/70sh1/eddy/actions/workflows/run-tests.yml/badge.svg"></a>
+  <a href="https://github.com/70sh1/eddy/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-green"></a>
+</p>
+
+<p align="center">
+  <img width=700 src="demo.gif" alt="demo" />
 </p>
 
 _eddy_ is a simple and fast CLI file encryption tool. It features concurrent file processing while ensuring data authenticity and plausible deniability. It is also capable of generating secure [passphrases](#passphrase-generation).
