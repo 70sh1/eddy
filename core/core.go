@@ -44,7 +44,7 @@ type processor struct {
 	sourceSize int64
 }
 
-// Create new ChaCha20-Blake2b processor with underlying "source" file.
+// Creates new ChaCha20-Blake2b processor with underlying "source" file.
 func newProcessor(sourcePath string, password string, mode mode) (*processor, error) {
 	file, err := os.Open(sourcePath)
 	if err != nil {
@@ -121,6 +121,7 @@ func (p *processor) updateMac(data []byte) error {
 	return nil
 }
 
+// Derives a key using scrypt KDF.
 func deriveKey(password string, salt []byte) ([]byte, error) {
 	defer debug.FreeOSMemory() // Free memory held after scrypt call
 	if len(salt) != 16 {
@@ -129,7 +130,7 @@ func deriveKey(password string, salt []byte) ([]byte, error) {
 	return scrypt.Key([]byte(password), salt, 65536, 8, 1, 32) // 65536 == 2^16
 }
 
-// Check whenever given slice of strings contains duplicates.
+// Checks whenever given slice of strings contains duplicates.
 func hasDuplicates(s []string) bool {
 	a := make(map[string]bool)
 	for _, v := range s {
@@ -142,7 +143,7 @@ func hasDuplicates(s []string) bool {
 	return false
 }
 
-// Check whenever given slice of paths contains duplicate filenames.
+// Checks whenever given slice of paths contains duplicate filenames.
 func hasDuplicateFilenames(s []string) bool {
 	a := make(map[string]bool)
 	for _, v := range s {
@@ -181,7 +182,7 @@ func formatSize(b int64) string {
 	}
 }
 
-// Create new progress bar pool.
+// Creates new progress bar pool.
 func newBarPool(paths []string, noEmoji bool) (pool *pb.Pool, bars []*pb.ProgressBar) {
 	barTmpl := `{{ string . "status" }} {{ string . "filename" }} {{ string . "filesize" }} {{ bar . "[" "-"  ">" " " "]" }} {{ string . "error" }}`
 	for _, path := range paths {
@@ -198,6 +199,9 @@ func barFail(bar *pb.ProgressBar, err error, noEmoji bool) {
 	bar.Set("error", err)
 }
 
+// Generates a secure passphrase of a given length.
+// Returns error if length < 6.
+// The resulting passphrase has it's words joined with "-" in between them.
 func GeneratePassphrase(length int) (string, error) {
 	if length < 6 {
 		return "", errors.New("length less than 6 is not secure")
@@ -219,6 +223,9 @@ func GeneratePassphrase(length int) (string, error) {
 	return strings.Join(passhprase, "-"), nil
 }
 
+// Cleans given paths and ouputDir and checks for duplicates.
+// Also checks for duplicate filenames if outputDir is not empty.
+// Returns cleaned paths or error if any of the checks failed.
 func CleanAndCheckPaths(paths []string, outputDir string) ([]string, string, error) {
 	if len(paths) == 1 && paths[0] == "" {
 		return nil, "", errors.New("empty path sequence")
