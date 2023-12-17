@@ -91,9 +91,9 @@ func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	return nil
 }
 
-func EncryptFiles(paths []string, outputDir, password string, overwrite bool, noEmoji bool) (int64, error) {
+func EncryptFiles(paths []string, outputDir, password string, overwrite bool, noEmoji bool) (int, error) {
 	var wg sync.WaitGroup
-	var numProcessed int64
+	var numProcessed int
 
 	barPool, bars := newBarPool(paths, noEmoji)
 	if err := barPool.Start(); err != nil {
