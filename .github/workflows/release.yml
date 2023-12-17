@@ -15,21 +15,21 @@ jobs:
         include:
           - {GOOS: linux, GOARCH: amd64}
           - {GOOS: linux, GOARCH: arm64}
-          - {GOOS: windows, GOARCH: amd64}
           - {GOOS: darwin, GOARCH: amd64}
           - {GOOS: darwin, GOARCH: arm64}
+          - {GOOS: windows, GOARCH: amd64}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up Go
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@v5
       with:
         go-version: '1.21.x'
         
     - name: Install dependencies
       run: go get .
 
-    - name: Build
+    - name: Build binaries
       env:
           CGO_ENABLED: 0
           GOOS: ${{ matrix.GOOS }}
@@ -49,7 +49,7 @@ jobs:
           mv eddy-$VERSION-darwin-$GOARCH.tar.gz eddy-$VERSION-macOS-$GOARCH.tar.gz
         fi
 
-    - name: Attach
+    - name: Attach binaries
       uses: softprops/action-gh-release@v1
       with:
         files: |
