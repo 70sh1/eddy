@@ -130,27 +130,25 @@ func encrypt(cCtx *cli.Context) error {
 	if paths, outputDir, err = core.CleanAndCheckPaths(paths, outputDir); err != nil {
 		return err
 	}
+	if password == "" && passGenLen == 0 {
+		password, err = scanPassword(core.ConditionalPrefix("🔑 ", "Password: ", noEmoji))
+		if err != nil {
+			return err
+		}
+		password2, err := scanPassword(core.ConditionalPrefix("🔑 ", "Confirm password: ", noEmoji))
+		if err != nil {
+			return err
+		}
+		if password != password2 {
+			return errors.New("passwords do not match")
+		}
+		passGenLen = 6
+	}
 	if password == "" {
-		if passGenLen == 0 {
-			password, err = scanPassword(core.ConditionalPrefix("🔑 ", "Password: ", noEmoji))
-			if err != nil {
-				return err
-			}
-			password2, err := scanPassword(core.ConditionalPrefix("🔑 ", "Confirm password: ", noEmoji))
-			if err != nil {
-				return err
-			}
-			if password != password2 {
-				return errors.New("passwords do not match")
-			}
-			passGenLen = 6
+		if password, err = core.GeneratePassphrase(passGenLen); err != nil {
+			return fmt.Errorf("failed to generate passphrase; %v", err)
 		}
-		if password == "" {
-			if password, err = core.GeneratePassphrase(passGenLen); err != nil {
-				return fmt.Errorf("failed to generate passphrase; %v", err)
-			}
-			noPasswordProvided = true
-		}
+		noPasswordProvided = true
 	}
 
 	startTime := time.Now()
