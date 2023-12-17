@@ -109,8 +109,8 @@ func DecryptFiles(paths []string, outputDir, password string, overwrite bool, no
 
 	wg.Add(len(paths))
 	for i := 0; i < len(paths); i++ {
-		fileIn := paths[i]
 		bar := bars[i]
+		fileIn := paths[i]
 		go func() {
 			defer wg.Done()
 			fileOut := strings.TrimSuffix(fileIn, ".eddy")
