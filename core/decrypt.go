@@ -55,12 +55,12 @@ func decryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	if err != nil {
 		return err
 	}
-	decryptor := &decryptor{processor}
-	defer decryptor.source.Close()
+	dec := &decryptor{processor}
+	defer dec.source.Close()
 
-	bar.Set("filesize", formatSize(decryptor.sourceSize))
+	bar.Set("filesize", formatSize(dec.sourceSize))
 	// We will go through the file twice so the progress bar total should be double the file size
-	bar.SetTotal(decryptor.sourceSize * 2)
+	bar.SetTotal(dec.sourceSize * 2)
 
 	tmpFile, err := os.CreateTemp(filepath.Dir(pathOut), "*.tmp")
 	if err != nil {
@@ -70,11 +70,11 @@ func decryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 
 	// Verify file
 	expectedTag := make([]byte, 64)
-	n, err := io.ReadFull(decryptor.source, expectedTag)
+	n, err := io.ReadFull(dec.source, expectedTag)
 	if n != 64 {
 		return fmt.Errorf("failed to read MAC tag; %v", err)
 	}
-	fileIsValid, err := verifyFile(decryptor, expectedTag, bar)
+	fileIsValid, err := verifyFile(dec, expectedTag, bar)
 	if err != nil {
 		return fmt.Errorf("error verifying file; %v", err)
 	}
@@ -84,13 +84,13 @@ func decryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	}
 
 	// Decrypt
-	decryptorProxy := bar.NewProxyReader(decryptor)
+	decryptorProxy := bar.NewProxyReader(dec)
 	if _, err := io.Copy(tmpFile, decryptorProxy); err != nil {
 		return err
 	}
 
 	tmpFile.Close()
-	decryptor.source.Close()
+	dec.source.Close()
 
 	if err := os.Rename(tmpFile.Name(), pathOut); err != nil {
 		return err

@@ -46,8 +46,8 @@ func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	if err != nil {
 		return err
 	}
-	encryptor := &encryptor{processor}
-	defer encryptor.source.Close()
+	enc := &encryptor{processor}
+	defer enc.source.Close()
 
 	tmpFile, err := os.CreateTemp(filepath.Dir(pathOut), "*.tmp")
 	if err != nil {
@@ -56,26 +56,26 @@ func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	defer closeAndRemove(tmpFile)
 
 	var header []byte
-	tagPlaceholder := make([]byte, encryptor.blake.Size())
-	header = append(header, encryptor.nonce...)
-	header = append(header, encryptor.blakeSalt...)
+	tagPlaceholder := make([]byte, enc.blake.Size())
+	header = append(header, enc.nonce...)
+	header = append(header, enc.blakeSalt...)
 	header = append(header, tagPlaceholder...)
 
 	if _, err := tmpFile.Write(header); err != nil {
 		return err
 	}
 
-	bar.Set("filesize", formatSize(encryptor.sourceSize))
-	bar.SetTotal(encryptor.sourceSize)
+	bar.Set("filesize", formatSize(enc.sourceSize))
+	bar.SetTotal(enc.sourceSize)
 	w := bar.NewProxyWriter(tmpFile)
 	defer w.Close()
 
-	if _, err := io.Copy(w, encryptor); err != nil {
+	if _, err := io.Copy(w, enc); err != nil {
 		return err
 	}
 
-	tag := encryptor.blake.Sum(nil)
-	if _, err := tmpFile.Seek(int64(len(encryptor.nonce)+len(encryptor.blakeSalt)), 0); err != nil {
+	tag := enc.blake.Sum(nil)
+	if _, err := tmpFile.Seek(int64(len(enc.nonce)+len(enc.blakeSalt)), 0); err != nil {
 		return err
 	}
 	if _, err := tmpFile.Write(tag); err != nil {
@@ -83,7 +83,7 @@ func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	}
 
 	tmpFile.Close()
-	encryptor.source.Close()
+	enc.source.Close()
 	if err := os.Rename(tmpFile.Name(), pathOut); err != nil {
 		return err
 	}
