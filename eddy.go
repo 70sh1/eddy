@@ -31,13 +31,13 @@ func main() {
 				Name:        "output",
 				Aliases:     []string{"o"},
 				Destination: &outputDir,
-				Usage:       "specify output directory",
+				Usage:       "specify output directory `PATH`",
 			},
 			&cli.IntFlag{
 				Name:        "passgenlen",
 				Aliases:     []string{"g"},
 				Destination: &passGenLen,
-				Usage:       "specify generated passphrase length",
+				Usage:       "specify generated passphrase `LENGTH`",
 				DefaultText: "6",
 			},
 			&cli.BoolFlag{
@@ -55,14 +55,14 @@ func main() {
 			&cli.StringFlag{
 				Name:        "unsafe-password",
 				Destination: &password,
-				Usage:       "replaces password prompt with the provided password",
+				Usage:       "replaces password prompt with the provided `PASSWORD`",
 			},
 		},
 		Commands: []*cli.Command{
 			{
 				Name:    "encrypt",
 				Aliases: []string{"enc", "e"},
-				Usage:   "encrypt provided `FILES`",
+				Usage:   "encrypt provided files",
 				Action: func(cCtx *cli.Context) error {
 					var noPasswordProvided bool
 					var numProcessed int64
@@ -112,7 +112,7 @@ func main() {
 			{
 				Name:    "decrypt",
 				Aliases: []string{"dec", "d"},
-				Usage:   "decrypt provided `FILES`",
+				Usage:   "decrypt provided files",
 				Action: func(cCtx *cli.Context) error {
 					var err error
 					log.SetPrefix(core.ConditionalPrefix("❗ ", "ERROR: ", noEmoji))
