@@ -185,7 +185,7 @@ func newBarPool(paths []string, noEmoji bool) (pool *pb.Pool, bars []*pb.Progres
 
 func barFail(bar *pb.ProgressBar, err error, noEmoji bool) {
 	bar.Set("status", ConditionalPrefix("❌", "", noEmoji))
-	bar.Set("error", err)
+	bar.Set("error", err.Error())
 }
 
 // Generates a secure passphrase of a given length.
