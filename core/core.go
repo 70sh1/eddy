@@ -2,7 +2,7 @@ package core
 
 import (
 	"crypto/rand"
-	"embed"
+	_ "embed"
 	"errors"
 	"fmt"
 	"hash"
@@ -33,7 +33,7 @@ const (
 )
 
 //go:embed wordlist.txt
-var embedded embed.FS
+var wordlist string
 
 type processor struct {
 	c          *chacha20.Cipher
@@ -194,10 +194,6 @@ func barFail(bar *pb.ProgressBar, err error, noEmoji bool) {
 func GeneratePassphrase(length int) (string, error) {
 	if length < 6 {
 		return "", errors.New("length less than 6 is not secure")
-	}
-	wordlist, err := embedded.ReadFile("wordlist.txt")
-	if err != nil {
-		return "", err
 	}
 	words := strings.Split(string(wordlist), "\n")
 
