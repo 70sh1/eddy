@@ -42,6 +42,7 @@ func (p *encryptor) updateMac(data []byte) error {
 }
 
 func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
+	defer bar.Finish()
 	processor, err := newProcessor(pathIn, password, encryption)
 	if err != nil {
 		return err
@@ -68,7 +69,6 @@ func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	bar.Set("filesize", formatSize(enc.sourceSize))
 	bar.SetTotal(enc.sourceSize)
 	w := bar.NewProxyWriter(tmpFile)
-	defer w.Close()
 
 	if _, err := io.Copy(w, enc); err != nil {
 		return err
