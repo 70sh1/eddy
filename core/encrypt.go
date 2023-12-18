@@ -68,9 +68,9 @@ func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 
 	bar.Set("filesize", formatSize(enc.sourceSize))
 	bar.SetTotal(enc.sourceSize)
-	w := bar.NewProxyWriter(tmpFile)
 
-	if _, err := io.Copy(w, enc); err != nil {
+	encryptorProxy := bar.NewProxyReader(enc)
+	if _, err := io.Copy(tmpFile, encryptorProxy); err != nil {
 		return err
 	}
 
