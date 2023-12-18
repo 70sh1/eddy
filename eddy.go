@@ -144,6 +144,8 @@ func encrypt(cCtx *cli.Context) error {
 		}
 		passGenLen = 6
 	}
+
+	startTime := time.Now()
 	if password == "" {
 		if password, err = core.GeneratePassphrase(passGenLen); err != nil {
 			return fmt.Errorf("failed to generate passphrase; %v", err)
@@ -151,7 +153,6 @@ func encrypt(cCtx *cli.Context) error {
 		noPasswordProvided = true
 	}
 
-	startTime := time.Now()
 	if numProcessed, err = core.EncryptFiles(paths, outputDir, password, overwrite, noEmoji); err != nil {
 		return err
 	}
