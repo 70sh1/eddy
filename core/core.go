@@ -40,7 +40,7 @@ type processor struct {
 	blake      hash.Hash
 	source     *os.File
 	nonce      []byte
-	blakeSalt  []byte
+	scryptSalt []byte
 	sourceSize int64
 }
 

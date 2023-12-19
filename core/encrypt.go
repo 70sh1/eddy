@@ -59,7 +59,7 @@ func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	header := make([]byte, 0, 92)
 	tagPlaceholder := make([]byte, enc.blake.Size())
 	header = append(header, enc.nonce...)
-	header = append(header, enc.blakeSalt...)
+	header = append(header, enc.scryptSalt...)
 	header = append(header, tagPlaceholder...)
 
 	if _, err := tmpFile.Write(header); err != nil {
@@ -75,7 +75,7 @@ func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	}
 
 	tag := enc.blake.Sum(nil)
-	if _, err := tmpFile.Seek(int64(len(enc.nonce)+len(enc.blakeSalt)), 0); err != nil {
+	if _, err := tmpFile.Seek(int64(len(enc.nonce)+len(enc.scryptSalt)), 0); err != nil {
 		return err
 	}
 	if _, err := tmpFile.Write(tag); err != nil {
