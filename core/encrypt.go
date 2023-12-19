@@ -42,7 +42,6 @@ func (p *encryptor) updateMac(data []byte) error {
 }
 
 func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
-	defer bar.Finish()
 	processor, err := newProcessor(pathIn, password, encryption)
 	if err != nil {
 		return err
@@ -106,6 +105,7 @@ func EncryptFiles(paths []string, outputDir, password string, overwrite bool, no
 		fileIn := paths[i]
 		go func() {
 			defer wg.Done()
+			defer bar.Finish()
 			fileOut := fileIn + ".eddy"
 			if outputDir != "" {
 				fileOut = filepath.Join(outputDir, filepath.Base(fileOut))

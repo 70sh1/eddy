@@ -51,7 +51,6 @@ func verifyFile(dec *decryptor, expectedTag []byte, bar *pb.ProgressBar) (bool, 
 }
 
 func decryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
-	defer bar.Finish()
 	processor, err := newProcessor(pathIn, password, decryption)
 	if err != nil {
 		return err
@@ -114,6 +113,7 @@ func DecryptFiles(paths []string, outputDir, password string, overwrite bool, no
 		fileIn := paths[i]
 		go func() {
 			defer wg.Done()
+			defer bar.Finish()
 			fileOut := strings.TrimSuffix(fileIn, ".eddy")
 			if outputDir != "" {
 				fileOut = filepath.Join(outputDir, filepath.Base(fileOut))
