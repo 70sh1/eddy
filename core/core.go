@@ -44,7 +44,7 @@ type processor struct {
 	sourceSize int64
 }
 
-// Creates new ChaCha20-Blake2b processor with underlying "source" file.
+// Creates new ChaCha20-BLAKE2b processor with underlying "source" file.
 func newProcessor(sourcePath string, password string, mode mode) (*processor, error) {
 	file, err := os.Open(sourcePath)
 	if err != nil {
