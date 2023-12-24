@@ -85,6 +85,12 @@ func scanPassword(prompt string) (string, error) {
 	return string(bytePassword), nil
 }
 
+func doneMessage(startTime time.Time, noEmoji bool) {
+	fmt.Println()
+	deltaTime := time.Since(startTime).Round(time.Millisecond)
+	fmt.Printf(core.ConditionalPrefix("✨ ", "Done in %v\n", noEmoji), deltaTime)
+}
+
 func decrypt(cCtx *cli.Context) error {
 	var err error
 
@@ -108,11 +114,9 @@ func decrypt(cCtx *cli.Context) error {
 	if err := core.DecryptFiles(paths, outputDir, password, overwrite, noEmoji); err != nil {
 		return err
 	}
-	deltaTime := time.Since(startTime).Round(time.Millisecond)
-	fmt.Println()
-	fmt.Printf(core.ConditionalPrefix("✨ ", "Done in %v\n", noEmoji), deltaTime)
-	return nil
+	doneMessage(startTime, noEmoji)
 
+	return nil
 }
 
 func encrypt(cCtx *cli.Context) error {
@@ -160,8 +164,7 @@ func encrypt(cCtx *cli.Context) error {
 		fmt.Println()
 		fmt.Printf(core.ConditionalPrefix("🔑 ", "NOTE: This passphrase was generated and used: '%v'\n", noEmoji), password)
 	}
-	deltaTime := time.Since(startTime).Round(time.Millisecond)
-	fmt.Println()
-	fmt.Printf(core.ConditionalPrefix("✨ ", "Done in %v\n", noEmoji), deltaTime)
+	doneMessage(startTime, noEmoji)
+
 	return nil
 }
