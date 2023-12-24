@@ -52,20 +52,20 @@ func main() {
 			},
 			&cli.StringFlag{
 				Name:  "unsafe-password",
-				Usage: "replaces password prompt with the provided `PASSWORD`",
+				Usage: "replace password prompt with the provided `PASSWORD`",
 			},
 		},
 		Commands: []*cli.Command{
 			{
 				Name:    "encrypt",
 				Aliases: []string{"enc", "e"},
-				Usage:   "encrypt provided files",
+				Usage:   "Encrypts provided files",
 				Action:  encrypt,
 			},
 			{
 				Name:    "decrypt",
 				Aliases: []string{"dec", "d"},
-				Usage:   "decrypt provided files",
+				Usage:   "Decrypts provided files",
 				Action:  decrypt,
 			},
 		},
