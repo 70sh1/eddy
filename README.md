@@ -63,6 +63,8 @@ If no password (empty one) was provided during encryption (this includes lack of
 
 ## Tips & notes
 - The maximum file size is **256 GiB**.
+- _eddy_ doesn't delete input files.
+- _eddy_ doesn't preserve original metadata.
 - It is safe to rename any files that are encrypted with _eddy_. This means that decryption does not require `.eddy` file extension.
 
 ## How it works
