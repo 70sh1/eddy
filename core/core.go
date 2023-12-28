@@ -195,7 +195,7 @@ func GeneratePassphrase(length int) (string, error) {
 	if length < 6 {
 		return "", errors.New("length less than 6 is not secure")
 	}
-	words := strings.Split(string(wordlist), "\n")
+	words := strings.Split(wordlist, "\n")
 
 	passhprase := make([]string, 0, length)
 	for i := 0; i < length; i++ {
