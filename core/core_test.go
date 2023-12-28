@@ -59,7 +59,7 @@ func testFilesSetup() string {
 	f7, err := os.Create(filepath.Join(tmpDir, "header-only.txt.eddy"))
 	panicIfErr(err)
 	defer f7.Close()
-	if _, err := f7.Write(make([]byte, 92)); err != nil {
+	if _, err := f7.Write(make([]byte, headerLen)); err != nil {
 		panic(err)
 	}
 	return tmpDir
@@ -517,7 +517,7 @@ func TestEncryptDecryptFile(t *testing.T) {
 		outputFileContent, err := os.ReadFile(output)
 		panicIfErr(err)
 		require.Equal(t, expectedFileSizes[i], int64(len(outputFileContent)))
-		require.NotEqual(t, inputFileContent, outputFileContent[92:])
+		require.NotEqual(t, inputFileContent, outputFileContent[headerLen:])
 	}
 
 	testDecryptFile(t, dir)

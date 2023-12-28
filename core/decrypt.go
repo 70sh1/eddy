@@ -38,7 +38,7 @@ func verifyFile(dec *decryptor, expectedTag []byte, bar *pb.ProgressBar) (bool, 
 	}
 
 	// Reset file offset back to the header end
-	if _, err := dec.source.Seek(92, 0); err != nil {
+	if _, err := dec.source.Seek(headerLen, 0); err != nil {
 		return false, err
 	}
 

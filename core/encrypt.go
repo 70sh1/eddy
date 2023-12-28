@@ -55,7 +55,7 @@ func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	}
 	defer closeAndRemove(tmpFile)
 
-	header := make([]byte, 0, 92)
+	header := make([]byte, 0, headerLen)
 	tagPlaceholder := make([]byte, enc.blake.Size())
 	header = append(header, enc.nonce...)
 	header = append(header, enc.scryptSalt...)

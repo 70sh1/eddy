@@ -26,6 +26,8 @@ const (
 	decryption
 )
 
+const headerLen = 92
+
 const (
 	KiB = 1024
 	MiB = KiB * 1024
