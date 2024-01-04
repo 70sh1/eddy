@@ -17,7 +17,7 @@ func main() {
 	app := &cli.App{
 		Name:                   "eddy",
 		Usage:                  "simple and fast file encryption",
-		Version:                "1.2.2",
+		Version:                "1.2.3",
 		UseShortOptionHandling: true,
 		Suggest:                true,
 		Before: func(ctx *cli.Context) error {
