@@ -226,8 +226,8 @@ func TestNewProcessor(t *testing.T) {
 	}
 
 	processor, err := newProcessor(filepath.Join(dir, "small.txt.eddy"), password, decryption)
-	processor.source.Close()
 	require.NoError(t, err)
+	processor.source.Close()
 	require.NotNil(t, processor.c)
 	require.NotNil(t, processor.source)
 	require.Equal(t, int64(116), processor.sourceSize)
