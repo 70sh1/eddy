@@ -39,7 +39,7 @@ func TestHasDuplicates(t *testing.T) {
 			expected: false,
 		}}
 	for _, tCase := range cases {
-		result := HasDuplicates(tCase.in)
+		result := hasDuplicates(tCase.in)
 		require.Equal(t, tCase.expected, result)
 	}
 }
@@ -75,7 +75,7 @@ func TestHasDuplicateFilenames(t *testing.T) {
 		},
 	}
 	for _, tCase := range cases {
-		result := HasDuplicateFilenames(tCase.in)
+		result := hasDuplicateFilenames(tCase.in)
 		require.Equal(t, tCase.expected, result)
 	}
 }

@@ -8,7 +8,7 @@ import (
 )
 
 // Checks whenever given slice of strings contains duplicates.
-func HasDuplicates(s []string) bool {
+func hasDuplicates(s []string) bool {
 	a := make(map[string]bool)
 	for _, v := range s {
 		if _, e := a[v]; !e {
@@ -21,7 +21,7 @@ func HasDuplicates(s []string) bool {
 }
 
 // Checks whenever given slice of paths contains duplicate filenames.
-func HasDuplicateFilenames(s []string) bool {
+func hasDuplicateFilenames(s []string) bool {
 	a := make(map[string]bool)
 	for _, v := range s {
 		if _, e := a[filepath.Base(v)]; !e {
@@ -53,7 +53,7 @@ func CleanAndCheckPaths(paths []string, outputDir string) ([]string, string, err
 		paths[i] = filepath.Clean(paths[i])
 	}
 
-	if HasDuplicates(paths) {
+	if hasDuplicates(paths) {
 		return nil, "", errors.New("duplicate paths are not allowed")
 	}
 
@@ -67,7 +67,7 @@ func CleanAndCheckPaths(paths []string, outputDir string) ([]string, string, err
 			return nil, "", fmt.Errorf("'%s' is not a directory", filepath.Base(outputDir))
 		}
 
-		if HasDuplicateFilenames(paths) {
+		if hasDuplicateFilenames(paths) {
 			return nil, "", errors.New("duplicate filenames are not allowed with output (-o) flag")
 		}
 	}
