@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/70sh1/eddy/core"
+	"github.com/70sh1/eddy/core/format"
+	"github.com/70sh1/eddy/core/pathutils"
 	"github.com/urfave/cli/v2"
 	"golang.org/x/term"
 )
@@ -25,7 +27,7 @@ func main() {
 			// Remove date/time prefix from logger
 			log.SetFlags(0)
 			// Only logging errors with log.Fatal so this prefix is set
-			log.SetPrefix(core.ConditionalPrefix("❗ ", "ERROR: ", ctx.Bool("no-emoji")))
+			log.SetPrefix(format.ConditionalPrefix("❗ ", "ERROR: ", ctx.Bool("no-emoji")))
 			return nil
 		},
 		Flags: []cli.Flag{
@@ -88,7 +90,7 @@ func scanPassword(prompt string) (string, error) {
 func doneMessage(startTime time.Time, noEmoji bool) {
 	fmt.Println()
 	deltaTime := time.Since(startTime).Round(time.Millisecond)
-	fmt.Printf(core.ConditionalPrefix("✨ ", "Done in %v\n", noEmoji), deltaTime)
+	fmt.Printf(format.ConditionalPrefix("✨ ", "Done in %v\n", noEmoji), deltaTime)
 }
 
 func decrypt(cCtx *cli.Context) error {
@@ -100,11 +102,11 @@ func decrypt(cCtx *cli.Context) error {
 	password := cCtx.String("unsafe-password")
 	paths := append(cCtx.Args().Tail(), cCtx.Args().First())
 
-	if paths, outputDir, err = core.CleanAndCheckPaths(paths, outputDir); err != nil {
+	if paths, outputDir, err = pathutils.CleanAndCheckPaths(paths, outputDir); err != nil {
 		return err
 	}
 	if password == "" {
-		password, err = scanPassword(core.ConditionalPrefix("🔑 ", "Password: ", noEmoji))
+		password, err = scanPassword(format.ConditionalPrefix("🔑 ", "Password: ", noEmoji))
 		if err != nil {
 			return err
 		}
@@ -131,15 +133,15 @@ func encrypt(cCtx *cli.Context) error {
 	password := cCtx.String("unsafe-password")
 	paths := append(cCtx.Args().Tail(), cCtx.Args().First())
 
-	if paths, outputDir, err = core.CleanAndCheckPaths(paths, outputDir); err != nil {
+	if paths, outputDir, err = pathutils.CleanAndCheckPaths(paths, outputDir); err != nil {
 		return err
 	}
 	if password == "" && passGenLen == 0 {
-		password, err = scanPassword(core.ConditionalPrefix("🔑 ", "Password: ", noEmoji))
+		password, err = scanPassword(format.ConditionalPrefix("🔑 ", "Password: ", noEmoji))
 		if err != nil {
 			return err
 		}
-		password2, err := scanPassword(core.ConditionalPrefix("🔑 ", "Confirm password: ", noEmoji))
+		password2, err := scanPassword(format.ConditionalPrefix("🔑 ", "Confirm password: ", noEmoji))
 		if err != nil {
 			return err
 		}
@@ -162,7 +164,7 @@ func encrypt(cCtx *cli.Context) error {
 	}
 	if noPasswordProvided && (numProcessed > 0) {
 		fmt.Println()
-		fmt.Printf(core.ConditionalPrefix("🔑 ", "NOTE: This passphrase was generated and used: '%v'\n", noEmoji), password)
+		fmt.Printf(format.ConditionalPrefix("🔑 ", "NOTE: This passphrase was generated and used: '%v'\n", noEmoji), password)
 	}
 	doneMessage(startTime, noEmoji)
 

@@ -10,6 +10,9 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/70sh1/eddy/core/bars"
+	"github.com/70sh1/eddy/core/format"
+	"github.com/70sh1/eddy/core/pathutils"
 	"github.com/cheggaaa/pb/v3"
 )
 
@@ -58,7 +61,7 @@ func decryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	dec := &decryptor{processor}
 	defer dec.source.Close()
 
-	bar.Set("filesize", formatSize(dec.sourceSize))
+	bar.Set("filesize", format.FormatSize(dec.sourceSize))
 	// We will go through the file twice so the progress bar total should be double the file size
 	bar.SetTotal(dec.sourceSize * 2)
 
@@ -66,7 +69,7 @@ func decryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	if err != nil {
 		return err
 	}
-	defer closeAndRemove(tmpFile)
+	defer pathutils.CloseAndRemove(tmpFile)
 
 	// Verify file
 	expectedTag := make([]byte, 64)
@@ -102,14 +105,14 @@ func decryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 func DecryptFiles(paths []string, outputDir, password string, overwrite bool, noEmoji bool) error {
 	var wg sync.WaitGroup
 
-	barPool, bars := newBarPool(paths, noEmoji)
+	barPool, pbars := bars.NewPool(paths, noEmoji)
 	if err := barPool.Start(); err != nil {
 		return err
 	}
 
 	wg.Add(len(paths))
 	for i := 0; i < len(paths); i++ {
-		bar := bars[i]
+		bar := pbars[i]
 		fileIn := paths[i]
 		go func() {
 			defer wg.Done()
@@ -119,15 +122,15 @@ func DecryptFiles(paths []string, outputDir, password string, overwrite bool, no
 				fileOut = filepath.Join(outputDir, filepath.Base(fileOut))
 			}
 			if _, err := os.Stat(fileOut); !errors.Is(err, os.ErrNotExist) && !overwrite {
-				barFail(bar, errors.New("output already exists"), noEmoji)
+				bars.Fail(bar, errors.New("output already exists"), noEmoji)
 				return
 			}
 			if err := decryptFile(fileIn, fileOut, password, bar); err != nil {
-				barFail(bar, err, noEmoji)
+				bars.Fail(bar, err, noEmoji)
 				return
 			}
 			bar.SetCurrent(bar.Total())
-			bar.Set("status", ConditionalPrefix("🔓", "", noEmoji))
+			bar.Set("status", format.ConditionalPrefix("🔓", "", noEmoji))
 		}()
 	}
 

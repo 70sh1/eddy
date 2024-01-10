@@ -9,11 +9,9 @@ import (
 	"io"
 	"math/big"
 	"os"
-	"path/filepath"
 	"runtime/debug"
 	"strings"
 
-	"github.com/cheggaaa/pb/v3"
 	"golang.org/x/crypto/blake2b"
 	"golang.org/x/crypto/chacha20"
 	"golang.org/x/crypto/scrypt"
@@ -27,12 +25,6 @@ const (
 )
 
 const headerLen = 92
-
-const (
-	KiB = 1024
-	MiB = KiB * 1024
-	GiB = MiB * 1024
-)
 
 //go:embed wordlist.txt
 var wordlist string
@@ -121,75 +113,6 @@ func deriveKey(password string, salt []byte) ([]byte, error) {
 	return scrypt.Key([]byte(password), salt, 65536, 8, 1, 32) // 65536 == 2^16
 }
 
-// Checks whenever given slice of strings contains duplicates.
-func hasDuplicates(s []string) bool {
-	a := make(map[string]bool)
-	for _, v := range s {
-		if _, e := a[v]; !e {
-			a[v] = true
-		} else {
-			return true
-		}
-	}
-	return false
-}
-
-// Checks whenever given slice of paths contains duplicate filenames.
-func hasDuplicateFilenames(s []string) bool {
-	a := make(map[string]bool)
-	for _, v := range s {
-		if _, e := a[filepath.Base(v)]; !e {
-			a[filepath.Base(v)] = true
-		} else {
-			return true
-		}
-	}
-	return false
-}
-
-func closeAndRemove(f *os.File) {
-	f.Close()
-	os.Remove(f.Name())
-}
-
-func filenameOverflow(s string, n int) string {
-	r := []rune(s)
-	if len(r) < n {
-		return s
-	}
-	return string(r[:n]) + "..."
-}
-
-func formatSize(b int64) string {
-	switch {
-	case b >= GiB:
-		return fmt.Sprintf("(%.02f GiB)", float64(b)/GiB)
-	case b >= MiB:
-		return fmt.Sprintf("(%.02f MiB)", float64(b)/MiB)
-	case b >= KiB:
-		return fmt.Sprintf("(%.02f KiB)", float64(b)/KiB)
-	default:
-		return fmt.Sprintf("(%d B)", b)
-	}
-}
-
-// Creates new progress bar pool.
-func newBarPool(paths []string, noEmoji bool) (pool *pb.Pool, bars []*pb.ProgressBar) {
-	barTmpl := `{{ string . "status" }} {{ string . "filename" }} {{ string . "filesize" }} {{ bar . "[" "-"  ">" " " "]" }} {{ string . "error" }}`
-	for _, path := range paths {
-		bar := pb.New64(1).SetTemplateString(barTmpl).SetWidth(90)
-		bar.Set("status", ConditionalPrefix("  ", "", noEmoji))
-		bar.Set("filename", filenameOverflow(filepath.Base(path), 25))
-		bars = append(bars, bar)
-	}
-	return pb.NewPool(bars...), bars
-}
-
-func barFail(bar *pb.ProgressBar, err error, noEmoji bool) {
-	bar.Set("status", ConditionalPrefix("❌", "", noEmoji))
-	bar.Set("error", err.Error())
-}
-
 // Generates a secure passphrase of a given length.
 // Returns error if length < 6.
 // The resulting passphrase has it's words joined with "-" in between them.
@@ -208,45 +131,4 @@ func GeneratePassphrase(length int) (string, error) {
 		passhprase = append(passhprase, words[n.Int64()])
 	}
 	return strings.Join(passhprase, "-"), nil
-}
-
-// Cleans given paths and ouputDir and checks for duplicates.
-// Also checks for duplicate filenames if outputDir is not empty.
-// Returns cleaned paths or error if any of the checks failed.
-func CleanAndCheckPaths(paths []string, outputDir string) ([]string, string, error) {
-	if len(paths) == 1 && paths[0] == "" {
-		return nil, "", errors.New("empty path sequence")
-	}
-
-	for i := 0; i < len(paths); i++ {
-		paths[i] = filepath.Clean(paths[i])
-	}
-
-	if hasDuplicates(paths) {
-		return nil, "", errors.New("duplicate paths are not allowed")
-	}
-
-	if outputDir != "" {
-		outputDir = filepath.Clean(outputDir)
-		fileInfo, err := os.Stat(outputDir)
-		if err != nil {
-			return nil, "", err
-		}
-		if !fileInfo.IsDir() {
-			return nil, "", fmt.Errorf("'%s' is not a directory", filepath.Base(outputDir))
-		}
-
-		if hasDuplicateFilenames(paths) {
-			return nil, "", errors.New("duplicate filenames are not allowed with output (-o) flag")
-		}
-	}
-
-	return paths, outputDir, nil
-}
-
-func ConditionalPrefix(prefix string, s string, withoutPrefix bool) string {
-	if withoutPrefix {
-		return s
-	}
-	return prefix + s
 }
