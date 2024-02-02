@@ -11,6 +11,7 @@ import (
 	"github.com/70sh1/eddy/core"
 	"github.com/70sh1/eddy/core/format"
 	"github.com/70sh1/eddy/core/pathutils"
+	"github.com/fatih/color"
 	"github.com/urfave/cli/v2"
 	"golang.org/x/term"
 )
@@ -27,7 +28,12 @@ func main() {
 			// Remove date/time prefix from logger
 			log.SetFlags(0)
 			// Only logging errors with log.Fatal so this prefix is set
-			log.SetPrefix(format.ConditionalPrefix("❗ ", "ERROR: ", ctx.Bool("no-emoji")))
+			noEmojiAndColor := ctx.Bool("no-emoji")
+			logPrefix := "ERROR: "
+			if !noEmojiAndColor {
+				logPrefix = color.RedString(logPrefix)
+			}
+			log.SetPrefix(format.ConditionalPrefix("❗ ", logPrefix, noEmojiAndColor))
 			return nil
 		},
 		Flags: []cli.Flag{
@@ -87,10 +93,10 @@ func scanPassword(prompt string) (string, error) {
 	return string(bytePassword), nil
 }
 
-func doneMessage(startTime time.Time, noEmoji bool) {
+func doneMessage(startTime time.Time, noEmojiAndColor bool) {
 	fmt.Println()
 	deltaTime := time.Since(startTime).Round(time.Millisecond)
-	fmt.Printf(format.ConditionalPrefix("✨ ", "Done in %v\n", noEmoji), deltaTime)
+	fmt.Printf(format.ConditionalPrefix("✨ ", "Done in %v\n", noEmojiAndColor), deltaTime)
 }
 
 func decrypt(cCtx *cli.Context) error {
@@ -98,7 +104,7 @@ func decrypt(cCtx *cli.Context) error {
 
 	outputDir := cCtx.String("output")
 	overwrite := cCtx.Bool("overwrite")
-	noEmoji := cCtx.Bool("no-emoji")
+	noEmojiAndColor := cCtx.Bool("no-emoji")
 	password := cCtx.String("unsafe-password")
 	paths := append(cCtx.Args().Tail(), cCtx.Args().First())
 
@@ -106,17 +112,17 @@ func decrypt(cCtx *cli.Context) error {
 		return err
 	}
 	if password == "" {
-		password, err = scanPassword(format.ConditionalPrefix("🔑 ", "Password: ", noEmoji))
+		password, err = scanPassword(format.ConditionalPrefix("🔑 ", "Password: ", noEmojiAndColor))
 		if err != nil {
 			return err
 		}
 	}
 
 	startTime := time.Now()
-	if err := core.DecryptFiles(paths, outputDir, password, overwrite, noEmoji); err != nil {
+	if err := core.DecryptFiles(paths, outputDir, password, overwrite, noEmojiAndColor); err != nil {
 		return err
 	}
-	doneMessage(startTime, noEmoji)
+	doneMessage(startTime, noEmojiAndColor)
 
 	return nil
 }
@@ -129,7 +135,7 @@ func encrypt(cCtx *cli.Context) error {
 	outputDir := cCtx.String("output")
 	passGenLen := cCtx.Int("passgenlen")
 	overwrite := cCtx.Bool("overwrite")
-	noEmoji := cCtx.Bool("no-emoji")
+	noEmojiAndColor := cCtx.Bool("no-emoji")
 	password := cCtx.String("unsafe-password")
 	paths := append(cCtx.Args().Tail(), cCtx.Args().First())
 
@@ -137,11 +143,11 @@ func encrypt(cCtx *cli.Context) error {
 		return err
 	}
 	if password == "" && passGenLen == 0 {
-		password, err = scanPassword(format.ConditionalPrefix("🔑 ", "Password: ", noEmoji))
+		password, err = scanPassword(format.ConditionalPrefix("🔑 ", "Password: ", noEmojiAndColor))
 		if err != nil {
 			return err
 		}
-		password2, err := scanPassword(format.ConditionalPrefix("🔑 ", "Confirm password: ", noEmoji))
+		password2, err := scanPassword(format.ConditionalPrefix("🔑 ", "Confirm password: ", noEmojiAndColor))
 		if err != nil {
 			return err
 		}
@@ -159,14 +165,14 @@ func encrypt(cCtx *cli.Context) error {
 		noPasswordProvided = true
 	}
 
-	if numProcessed, err = core.EncryptFiles(paths, outputDir, password, overwrite, noEmoji); err != nil {
+	if numProcessed, err = core.EncryptFiles(paths, outputDir, password, overwrite, noEmojiAndColor); err != nil {
 		return err
 	}
 	if noPasswordProvided && (numProcessed > 0) {
 		fmt.Println()
-		fmt.Printf(format.ConditionalPrefix("🔑 ", "NOTE: This passphrase was generated and used: '%v'\n", noEmoji), password)
+		fmt.Printf(format.ConditionalPrefix("🔑 ", "NOTE: This passphrase was generated and used: '%v'\n", noEmojiAndColor), password)
 	}
-	doneMessage(startTime, noEmoji)
+	doneMessage(startTime, noEmojiAndColor)
 
 	return nil
 }

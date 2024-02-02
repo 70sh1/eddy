@@ -93,11 +93,11 @@ func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	return nil
 }
 
-func EncryptFiles(paths []string, outputDir, password string, overwrite bool, noEmoji bool) (int, error) {
+func EncryptFiles(paths []string, outputDir, password string, overwrite bool, noEmojiAndColor bool) (int, error) {
 	var wg sync.WaitGroup
 	var numProcessed int
 
-	barPool, pbars := bars.NewPool(paths, noEmoji)
+	barPool, pbars := bars.NewPool(paths, noEmojiAndColor)
 	if err := barPool.Start(); err != nil {
 		return 0, err
 	}
@@ -114,15 +114,15 @@ func EncryptFiles(paths []string, outputDir, password string, overwrite bool, no
 				fileOut = filepath.Join(outputDir, filepath.Base(fileOut))
 			}
 			if _, err := os.Stat(fileOut); !errors.Is(err, os.ErrNotExist) && !overwrite {
-				bars.Fail(bar, errors.New("output already exists"), noEmoji)
+				bars.Fail(bar, errors.New("output already exists"), noEmojiAndColor)
 				return
 			}
 			if err := encryptFile(fileIn, fileOut, password, bar); err != nil {
-				bars.Fail(bar, err, noEmoji)
+				bars.Fail(bar, err, noEmojiAndColor)
 				return
 			}
 			bar.SetCurrent(bar.Total())
-			bar.Set("status", format.ConditionalPrefix("🔒", "", noEmoji))
+			bar.Set("status", format.ConditionalPrefix("🔒", "", noEmojiAndColor))
 			numProcessed++
 		}()
 	}

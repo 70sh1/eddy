@@ -43,7 +43,7 @@ eddy --unsafe-password supeR-$ecr3t --no-emoji -o . enc "D:/stuff/secret.txt" se
 
 `--overwrite, -w` - enable overwrite existing files.
 
-`--no-emoji, -n` - disable emojis in output.
+`--no-emoji, -n` - disable emojis and color in output.
 
 `--unsafe-password` - replace interactive password prompt with the provided value. Intended for scripts/automation and reading password from environment variables. The "unsafe" prefix here is to indicate that the provided value will likely stay in the shell command history which is not safe.
 
