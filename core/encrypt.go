@@ -33,8 +33,8 @@ func (e *encryptor) Read(b []byte) (int, error) {
 	return 0, io.EOF
 }
 
-func (p *encryptor) updateMac(data []byte) error {
-	n, err := p.blake.Write(data)
+func (e *encryptor) updateMac(data []byte) error {
+	n, err := e.blake.Write(data)
 	if err != nil {
 		return err
 	}
