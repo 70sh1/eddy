@@ -18,9 +18,9 @@ type encryptor struct {
 	*processor
 }
 
-// Read up to len(b) bytes from encryptor's source (file) into buffer b, truncate it if n < len(b),
-// XOR it, update the encryptor's MAC with the resulting slice,
-// return number of bytes read and error.
+// Reads up to len(b) bytes from encryptor's source (file) into buffer b, truncates it if n < len(b),
+// XOR it, updates the encryptor's MAC with the resulting slice,
+// returns number of bytes read and error.
 func (e *encryptor) Read(b []byte) (int, error) {
 	n, err := e.source.Read(b)
 	if n > 0 {
