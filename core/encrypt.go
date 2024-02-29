@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"sync"
 
 	"github.com/70sh1/eddy/core/bars"
@@ -58,12 +59,9 @@ func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	}
 	defer pathutils.CloseAndRemove(tmpFile)
 
-	header := make([]byte, 0, headerLen)
 	tagPlaceholder := make([]byte, enc.blake.Size())
-	header = append(header, enc.nonce...)
-	header = append(header, enc.scryptSalt...)
-	header = append(header, tagPlaceholder...)
 
+	header := slices.Concat(enc.nonce, enc.scryptSalt, tagPlaceholder)
 	if _, err := tmpFile.Write(header); err != nil {
 		return err
 	}
