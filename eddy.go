@@ -129,7 +129,7 @@ func decrypt(cCtx *cli.Context) error {
 
 func encrypt(cCtx *cli.Context) error {
 	var noPasswordProvided bool
-	var numProcessed int
+	var numProcessed uint64
 	var err error
 
 	outputDir := cCtx.String("output")

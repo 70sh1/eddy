@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"slices"
 	"sync"
+	"sync/atomic"
 
 	"github.com/70sh1/eddy/core/bars"
 	"github.com/70sh1/eddy/core/format"
@@ -91,9 +92,9 @@ func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	return nil
 }
 
-func EncryptFiles(paths []string, outputDir, password string, overwrite bool, noEmojiAndColor bool) (int, error) {
+func EncryptFiles(paths []string, outputDir, password string, overwrite bool, noEmojiAndColor bool) (uint64, error) {
 	var wg sync.WaitGroup
-	var numProcessed int
+	var numProcessed atomic.Uint64
 
 	barPool, pbars := bars.NewPool(paths, noEmojiAndColor)
 	if err := barPool.Start(); err != nil {
@@ -121,11 +122,11 @@ func EncryptFiles(paths []string, outputDir, password string, overwrite bool, no
 			}
 			bar.SetCurrent(bar.Total())
 			bar.Set("status", format.ConditionalPrefix("🔒", "", noEmojiAndColor))
-			numProcessed++
+			numProcessed.Add(1)
 		}()
 	}
 
 	wg.Wait()
 	barPool.Stop()
-	return numProcessed, nil
+	return numProcessed.Load(), nil
 }
