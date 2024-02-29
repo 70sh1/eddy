@@ -102,7 +102,7 @@ func decryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	return nil
 }
 
-func DecryptFiles(paths []string, outputDir, password string, overwrite bool, noEmojiAndColor bool) error {
+func DecryptFiles(paths []string, outputDir, password string, overwrite, noEmojiAndColor bool) error {
 	var wg sync.WaitGroup
 
 	barPool, pbars := bars.NewPool(paths, noEmojiAndColor)

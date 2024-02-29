@@ -92,7 +92,7 @@ func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	return nil
 }
 
-func EncryptFiles(paths []string, outputDir, password string, overwrite bool, noEmojiAndColor bool) (uint64, error) {
+func EncryptFiles(paths []string, outputDir, password string, overwrite, noEmojiAndColor bool) (uint64, error) {
 	var wg sync.WaitGroup
 	var numProcessed atomic.Uint64
 
