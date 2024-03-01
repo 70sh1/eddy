@@ -18,9 +18,12 @@ import (
 
 func main() {
 	app := &cli.App{
-		Name:                   "eddy",
-		Usage:                  "simple and fast file encryption",
-		Version:                "1.2.4",
+		Name:    "eddy",
+		Usage:   "simple and fast file encryption",
+		Version: "1.2.4",
+		Authors: []*cli.Author{
+			{Name: "70sh1", Email: "70sh1@proton.me"},
+		},
 		UseShortOptionHandling: true,
 		Suggest:                true,
 		Before: func(ctx *cli.Context) error {
