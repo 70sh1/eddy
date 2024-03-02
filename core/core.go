@@ -48,7 +48,7 @@ func newProcessor(sourcePath string, password string, mode mode) (*processor, er
 		}
 		return nil, err
 	}
-	fileInfo, err := os.Stat(sourcePath)
+	fileInfo, err := file.Stat()
 	if err != nil {
 		file.Close()
 		return nil, err
