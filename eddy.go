@@ -37,7 +37,7 @@ func main() {
 			if !noEmojiAndColor {
 				logPrefix = color.RedString(logPrefix)
 			}
-			log.SetPrefix(format.ConditionalPrefix("❗ ", logPrefix, noEmojiAndColor))
+			log.SetPrefix(format.CondPrefix("❗ ", logPrefix, noEmojiAndColor))
 			return nil
 		},
 		Flags: []cli.Flag{
@@ -88,14 +88,14 @@ func main() {
 }
 
 func scanPassword(mode core.Mode, noEmojiAndColor bool) (string, error) {
-	fmt.Print(format.ConditionalPrefix("🔑 ", "Password: ", noEmojiAndColor))
+	fmt.Print(format.CondPrefix("🔑 ", "Password: ", noEmojiAndColor))
 	password, err := term.ReadPassword(int(syscall.Stdin))
 	if err != nil {
 		return "", err
 	}
 	fmt.Print("\r")
 	if mode == core.Encryption {
-		fmt.Print(format.ConditionalPrefix("🔑 ", "Confirm password: ", noEmojiAndColor))
+		fmt.Print(format.CondPrefix("🔑 ", "Confirm password: ", noEmojiAndColor))
 		password2, err := term.ReadPassword(int(syscall.Stdin))
 		if err != nil {
 			return "", err
@@ -112,7 +112,7 @@ func scanPassword(mode core.Mode, noEmojiAndColor bool) (string, error) {
 func doneMessage(startTime time.Time, noEmojiAndColor bool) {
 	fmt.Println()
 	deltaTime := time.Since(startTime).Round(time.Millisecond)
-	fmt.Printf(format.ConditionalPrefix("✨ ", "Done in %v\n", noEmojiAndColor), deltaTime)
+	fmt.Printf(format.CondPrefix("✨ ", "Done in %v\n", noEmojiAndColor), deltaTime)
 }
 
 func decrypt(cCtx *cli.Context) error {
@@ -172,12 +172,15 @@ func encrypt(cCtx *cli.Context) error {
 		noPasswordProvided = true
 	}
 
-	if numProcessed, err = core.EncryptFiles(paths, outputDir, password, overwrite, noEmojiAndColor); err != nil {
+	numProcessed, err = core.EncryptFiles(paths, outputDir, password, overwrite, noEmojiAndColor)
+	if err != nil {
 		return err
 	}
 	if noPasswordProvided && (numProcessed > 0) {
 		fmt.Println()
-		fmt.Printf(format.ConditionalPrefix("🔑 ", "NOTE: This passphrase was generated and used: '%v'\n", noEmojiAndColor), password)
+		fmt.Printf(
+			format.CondPrefix("🔑 ", "NOTE: This passphrase was generated and used: '%v'\n", noEmojiAndColor), password,
+		)
 	}
 	doneMessage(startTime, noEmojiAndColor)
 

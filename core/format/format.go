@@ -8,7 +8,8 @@ const (
 	gib = mib * 1024
 )
 
-func ConditionalPrefix(prefix string, s string, withoutPrefix bool) string {
+// Conditional prefix.
+func CondPrefix(prefix string, s string, withoutPrefix bool) string {
 	if withoutPrefix {
 		return s
 	}

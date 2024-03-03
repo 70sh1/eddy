@@ -14,7 +14,7 @@ func NewPool(paths []string, noEmojiAndColor bool) (pool *pb.Pool, bars []*pb.Pr
 	barTmpl := `{{ string . "status" }} {{ string . "filename" }} {{ string . "filesize" }} {{ bar . "[" "-"  ">" " " "]" }} {{ string . "error" }}`
 	for _, path := range paths {
 		bar := pb.New64(1).SetTemplateString(barTmpl).SetWidth(90)
-		bar.Set("status", format.ConditionalPrefix("  ", "", noEmojiAndColor))
+		bar.Set("status", format.CondPrefix("  ", "", noEmojiAndColor))
 		bar.Set("filename", pathutils.FilenameOverflow(filepath.Base(path), 25))
 		bars = append(bars, bar)
 	}
@@ -26,6 +26,6 @@ func Fail(bar *pb.ProgressBar, err error, noEmojiAndColor bool) {
 	if !noEmojiAndColor {
 		errText = color.RedString(errText)
 	}
-	bar.Set("status", format.ConditionalPrefix("❌", "", noEmojiAndColor))
+	bar.Set("status", format.CondPrefix("❌", "", noEmojiAndColor))
 	bar.Set("error", errText)
 }

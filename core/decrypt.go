@@ -130,7 +130,7 @@ func DecryptFiles(paths []string, outputDir, password string, overwrite, noEmoji
 				return
 			}
 			bar.SetCurrent(bar.Total())
-			bar.Set("status", format.ConditionalPrefix("🔓", "", noEmojiAndColor))
+			bar.Set("status", format.CondPrefix("🔓", "", noEmojiAndColor))
 		}()
 	}
 
