@@ -76,7 +76,7 @@ func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	}
 
 	tag := enc.blake.Sum(nil)
-	if _, err := tmpFile.Seek(int64(len(enc.nonce)+len(enc.scryptSalt)), 0); err != nil {
+	if _, err := tmpFile.Seek(int64(headerLen-len(tag)), 0); err != nil {
 		return err
 	}
 	if _, err := tmpFile.Write(tag); err != nil {
