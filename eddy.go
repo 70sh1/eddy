@@ -115,33 +115,6 @@ func doneMessage(startTime time.Time, noEmojiAndColor bool) {
 	fmt.Printf(format.CondPrefix("✨ ", "Done in %v\n", noEmojiAndColor), deltaTime)
 }
 
-func decrypt(cCtx *cli.Context) error {
-	var err error
-
-	outputDir := cCtx.String("output")
-	overwrite := cCtx.Bool("overwrite")
-	noEmojiAndColor := cCtx.Bool("no-emoji")
-	password := cCtx.String("unsafe-password")
-	paths := append(cCtx.Args().Tail(), cCtx.Args().First())
-
-	if paths, outputDir, err = pathutils.CleanAndCheckPaths(paths, outputDir); err != nil {
-		return err
-	}
-	if password == "" {
-		if password, err = scanPassword(core.Decryption, noEmojiAndColor); err != nil {
-			return err
-		}
-	}
-
-	startTime := time.Now()
-	if err := core.DecryptFiles(paths, outputDir, password, overwrite, noEmojiAndColor); err != nil {
-		return err
-	}
-	doneMessage(startTime, noEmojiAndColor)
-
-	return nil
-}
-
 func encrypt(cCtx *cli.Context) error {
 	var noPasswordProvided bool
 	var numProcessed uint64
@@ -181,6 +154,33 @@ func encrypt(cCtx *cli.Context) error {
 		fmt.Printf(
 			format.CondPrefix("🔑 ", "NOTE: This passphrase was generated and used: '%v'\n", noEmojiAndColor), password,
 		)
+	}
+	doneMessage(startTime, noEmojiAndColor)
+
+	return nil
+}
+
+func decrypt(cCtx *cli.Context) error {
+	var err error
+
+	outputDir := cCtx.String("output")
+	overwrite := cCtx.Bool("overwrite")
+	noEmojiAndColor := cCtx.Bool("no-emoji")
+	password := cCtx.String("unsafe-password")
+	paths := append(cCtx.Args().Tail(), cCtx.Args().First())
+
+	if paths, outputDir, err = pathutils.CleanAndCheckPaths(paths, outputDir); err != nil {
+		return err
+	}
+	if password == "" {
+		if password, err = scanPassword(core.Decryption, noEmojiAndColor); err != nil {
+			return err
+		}
+	}
+
+	startTime := time.Now()
+	if err := core.DecryptFiles(paths, outputDir, password, overwrite, noEmojiAndColor); err != nil {
+		return err
 	}
 	doneMessage(startTime, noEmojiAndColor)
 
