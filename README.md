@@ -61,11 +61,15 @@ go install github.com/70sh1/eddy@latest
 ## Passphrase generation
 If no password (empty one) was provided during encryption (this includes lack of `--unsafe-password` flag and leaving interactive password prompt empty), _eddy_ will generate and use a secure passphrase (length of 6 words by default). The length can be adjusted using `--passgenlen (-g)` flag. Additionally, if this flag is provided, the password prompt will be skipped automatically. The passphrase is generated using cryptohraphically secure PRNG provided by the OS and EFF's long wordlist. You can read more about passphrases [here](https://www.eff.org/dice).
 
+## What this tool doesn't do
+- _eddy_ doesn't delete input files.
+- _eddy_ doesn't preserve file timestamps (creation date and date modified).
+- _eddy_ doesn't use any methods to increase the resilience of a file, such as error correction code. Therefore, regular backups of important files are recommended.
+
 ## Tips & notes
 - The maximum file size is **256 GiB**.
-- _eddy_ doesn't delete input files.
-- _eddy_ doesn't preserve original metadata (creation date and date modified).
 - It is safe to rename any files that are encrypted with _eddy_. This means that decryption does not require `.eddy` file extension.
+
 
 ## How it works
 _eddy_ leverages `ChaCha20` for encryption paired with keyed `BLAKE2b` for data authentication (MAC). The `scrypt` KDF is used for producing keys.
