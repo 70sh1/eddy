@@ -54,7 +54,7 @@ func verifyFile(dec *decryptor, expectedTag []byte, bar *pb.ProgressBar) (bool, 
 }
 
 func decryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
-	processor, err := newProcessor(pathIn, password, decryption)
+	processor, err := newProcessor(pathIn, password, Decryption)
 	if err != nil {
 		return err
 	}

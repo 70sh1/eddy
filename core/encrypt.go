@@ -47,7 +47,7 @@ func (e *encryptor) updateMac(data []byte) error {
 }
 
 func encryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
-	processor, err := newProcessor(pathIn, password, encryption)
+	processor, err := newProcessor(pathIn, password, Encryption)
 	if err != nil {
 		return err
 	}

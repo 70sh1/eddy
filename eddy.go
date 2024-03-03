@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"slices"
 	"syscall"
 	"time"
 
@@ -86,14 +87,26 @@ func main() {
 	}
 }
 
-func scanPassword(prompt string) (string, error) {
-	fmt.Print(prompt)
-	bytePassword, err := term.ReadPassword(int(syscall.Stdin))
-	fmt.Print("\r")
+func scanPassword(mode core.Mode, noEmojiAndColor bool) (string, error) {
+	fmt.Print(format.ConditionalPrefix("🔑 ", "Password: ", noEmojiAndColor))
+	password, err := term.ReadPassword(int(syscall.Stdin))
 	if err != nil {
 		return "", err
 	}
-	return string(bytePassword), nil
+	fmt.Print("\r")
+	if mode == core.Encryption {
+		fmt.Print(format.ConditionalPrefix("🔑 ", "Confirm password: ", noEmojiAndColor))
+		password2, err := term.ReadPassword(int(syscall.Stdin))
+		if err != nil {
+			return "", err
+		}
+		if !slices.Equal(password, password2) {
+			fmt.Print("\r")
+			return "", errors.New("passwords do not match")
+		}
+	}
+
+	return string(password), nil
 }
 
 func doneMessage(startTime time.Time, noEmojiAndColor bool) {
@@ -115,8 +128,7 @@ func decrypt(cCtx *cli.Context) error {
 		return err
 	}
 	if password == "" {
-		password, err = scanPassword(format.ConditionalPrefix("🔑 ", "Password: ", noEmojiAndColor))
-		if err != nil {
+		if password, err = scanPassword(core.Decryption, noEmojiAndColor); err != nil {
 			return err
 		}
 	}
@@ -146,16 +158,8 @@ func encrypt(cCtx *cli.Context) error {
 		return err
 	}
 	if password == "" && passGenLen == 0 {
-		password, err = scanPassword(format.ConditionalPrefix("🔑 ", "Password: ", noEmojiAndColor))
-		if err != nil {
+		if password, err = scanPassword(core.Encryption, noEmojiAndColor); err != nil {
 			return err
-		}
-		password2, err := scanPassword(format.ConditionalPrefix("🔑 ", "Confirm password: ", noEmojiAndColor))
-		if err != nil {
-			return err
-		}
-		if password != password2 {
-			return errors.New("passwords do not match")
 		}
 		passGenLen = 6
 	}

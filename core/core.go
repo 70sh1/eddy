@@ -17,11 +17,11 @@ import (
 	"golang.org/x/crypto/scrypt"
 )
 
-type mode int
+type Mode int
 
 const (
-	encryption mode = iota
-	decryption
+	Encryption Mode = iota
+	Decryption
 )
 
 const headerLen = 92
@@ -39,7 +39,7 @@ type processor struct {
 }
 
 // Creates new ChaCha20-BLAKE2b processor with underlying "source" file.
-func newProcessor(sourcePath string, password string, mode mode) (*processor, error) {
+func newProcessor(sourcePath string, password string, mode Mode) (*processor, error) {
 	file, err := os.Open(sourcePath)
 	if err != nil {
 		file.Close()
@@ -61,7 +61,7 @@ func newProcessor(sourcePath string, password string, mode mode) (*processor, er
 
 	nonce := make([]byte, chacha20.NonceSize)
 	var n int
-	if mode == encryption {
+	if mode == Encryption {
 		n, err = io.ReadFull(rand.Reader, nonce)
 	} else {
 		n, err = io.ReadFull(file, nonce)
@@ -72,7 +72,7 @@ func newProcessor(sourcePath string, password string, mode mode) (*processor, er
 	}
 
 	salt := make([]byte, 16)
-	if mode == encryption {
+	if mode == Encryption {
 		n, err = io.ReadFull(rand.Reader, salt)
 	} else {
 		n, err = io.ReadFull(file, salt)
