@@ -109,7 +109,7 @@ func scanPassword(mode core.Mode, noEmojiAndColor bool) (string, error) {
 	return string(password), nil
 }
 
-func doneMessage(startTime time.Time, noEmojiAndColor bool) {
+func printDoneMessage(startTime time.Time, noEmojiAndColor bool) {
 	fmt.Println()
 	deltaTime := time.Since(startTime).Round(time.Millisecond)
 	fmt.Printf(format.CondPrefix("✨ ", "Done in %v\n", noEmojiAndColor), deltaTime)
@@ -155,7 +155,7 @@ func encrypt(cCtx *cli.Context) error {
 			format.CondPrefix("🔑 ", "NOTE: This passphrase was generated and used: '%v'\n", noEmojiAndColor), password,
 		)
 	}
-	doneMessage(startTime, noEmojiAndColor)
+	printDoneMessage(startTime, noEmojiAndColor)
 
 	return nil
 }
@@ -182,7 +182,7 @@ func decrypt(cCtx *cli.Context) error {
 	if err := core.DecryptFiles(paths, outputDir, password, overwrite, noEmojiAndColor); err != nil {
 		return err
 	}
-	doneMessage(startTime, noEmojiAndColor)
+	printDoneMessage(startTime, noEmojiAndColor)
 
 	return nil
 }
