@@ -68,6 +68,7 @@ func TestDeriveKeyError(t *testing.T) {
 func TestNewProcessor(t *testing.T) {
 	dir := testutils.TestFilesSetup()
 	defer testutils.TestFilesCleanup(dir)
+
 	files := []string{filepath.Join(dir, "big.txt"), filepath.Join(dir, "small.txt")}
 	fileSizes := []int64{10_485_760, 24}
 
@@ -95,6 +96,7 @@ func TestNewProcessor(t *testing.T) {
 func TestNewProcessorError(t *testing.T) {
 	dir := testutils.TestFilesSetup()
 	defer testutils.TestFilesCleanup(dir)
+
 	modes := []Mode{Encryption, Decryption}
 
 	for _, mode := range modes {
@@ -121,6 +123,7 @@ func TestNewProcessorError(t *testing.T) {
 func TestEncryptorRead(t *testing.T) {
 	dir := testutils.TestFilesSetup()
 	defer testutils.TestFilesCleanup(dir)
+
 	source, err := os.Open(filepath.Join(dir, "big.txt"))
 	if err != nil {
 		source.Close()
@@ -151,6 +154,7 @@ func TestEncryptorRead(t *testing.T) {
 func TestEncryptorReadEOF(t *testing.T) {
 	dir := testutils.TestFilesSetup()
 	defer testutils.TestFilesCleanup(dir)
+
 	source, err := os.Open(filepath.Join(dir, "empty.txt"))
 	if err != nil {
 		source.Close()
@@ -180,6 +184,7 @@ func TestEncryptorReadEOF(t *testing.T) {
 func TestDecryptorRead(t *testing.T) {
 	dir := testutils.TestFilesSetup()
 	defer testutils.TestFilesCleanup(dir)
+
 	source := filepath.Join(dir, "small.txt.eddy")
 	processor, err := newProcessor(source, password, Decryption)
 	testutils.PanicIfErr(err)
@@ -200,6 +205,7 @@ func TestDecryptorRead(t *testing.T) {
 func TestDecryptorReadEOF(t *testing.T) {
 	dir := testutils.TestFilesSetup()
 	defer testutils.TestFilesCleanup(dir)
+
 	source := filepath.Join(dir, "header-only.txt.eddy")
 	processor, err := newProcessor(source, password, Decryption)
 	testutils.PanicIfErr(err)
@@ -270,6 +276,7 @@ func testDecryptFile(t *testing.T, dir string) {
 func TestDecryptFileError(t *testing.T) {
 	dir := testutils.TestFilesSetup()
 	defer testutils.TestFilesCleanup(dir)
+
 	err := os.Remove(filepath.Join(dir, "small.txt"))
 	testutils.PanicIfErr(err)
 
@@ -278,5 +285,4 @@ func TestDecryptFileError(t *testing.T) {
 	err = DecryptFile(input, output, "wrong-password", &pb.ProgressBar{})
 	require.Error(t, err)
 	require.NoFileExists(t, output)
-
 }
