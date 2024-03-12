@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewBarPool(t *testing.T) {
+func TestNewPool(t *testing.T) {
 	cases := [][]string{
 		{"file1", "path/file2.dat", "home/user/docs/file2"},
 		{"C:/some/dir/file1.txt", "path/file3", "home/user/docs/file2"},
