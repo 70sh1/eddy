@@ -87,7 +87,7 @@ func main() {
 	}
 }
 
-func scanPassword(mode core.Mode, noEmojiAndColor bool) (string, error) {
+func askPassword(mode core.Mode, noEmojiAndColor bool) (string, error) {
 	fmt.Print(format.CondPrefix("🔑 ", "Password: ", noEmojiAndColor))
 	password, err := term.ReadPassword(int(syscall.Stdin))
 	if err != nil {
@@ -131,7 +131,7 @@ func encrypt(cCtx *cli.Context) error {
 		return err
 	}
 	if password == "" && passGenLen == 0 {
-		if password, err = scanPassword(core.Encryption, noEmojiAndColor); err != nil {
+		if password, err = askPassword(core.Encryption, noEmojiAndColor); err != nil {
 			return err
 		}
 		passGenLen = 6
@@ -173,7 +173,7 @@ func decrypt(cCtx *cli.Context) error {
 		return err
 	}
 	if password == "" {
-		if password, err = scanPassword(core.Decryption, noEmojiAndColor); err != nil {
+		if password, err = askPassword(core.Decryption, noEmojiAndColor); err != nil {
 			return err
 		}
 	}
