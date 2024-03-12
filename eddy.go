@@ -5,13 +5,18 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"slices"
+	"strings"
+	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
+	"github.com/70sh1/eddy/bars"
 	"github.com/70sh1/eddy/core"
-	"github.com/70sh1/eddy/core/format"
-	"github.com/70sh1/eddy/core/pathutils"
+	"github.com/70sh1/eddy/format"
+	"github.com/70sh1/eddy/pathutils"
 	"github.com/fatih/color"
 	"github.com/urfave/cli/v2"
 	"golang.org/x/term"
@@ -145,7 +150,7 @@ func encrypt(cCtx *cli.Context) error {
 		noPasswordProvided = true
 	}
 
-	numProcessed, err = core.EncryptFiles(paths, outputDir, password, overwrite, noEmojiAndColor)
+	numProcessed, err = EncryptFiles(paths, outputDir, password, overwrite, noEmojiAndColor)
 	if err != nil {
 		return err
 	}
@@ -158,6 +163,45 @@ func encrypt(cCtx *cli.Context) error {
 	printDoneMessage(startTime, noEmojiAndColor)
 
 	return nil
+}
+
+func EncryptFiles(paths []string, outputDir, password string, overwrite, noEmojiAndColor bool) (uint64, error) {
+	var wg sync.WaitGroup
+	var numProcessed atomic.Uint64
+
+	barPool, pbars := bars.NewPool(paths, noEmojiAndColor)
+	if err := barPool.Start(); err != nil {
+		return 0, err
+	}
+
+	wg.Add(len(paths))
+	for i := 0; i < len(paths); i++ {
+		bar := pbars[i]
+		fileIn := paths[i]
+		go func() {
+			defer wg.Done()
+			defer bar.Finish()
+			fileOut := fileIn + ".eddy"
+			if outputDir != "" {
+				fileOut = filepath.Join(outputDir, filepath.Base(fileOut))
+			}
+			if _, err := os.Stat(fileOut); !errors.Is(err, os.ErrNotExist) && !overwrite {
+				bars.Fail(bar, errors.New("output already exists"), noEmojiAndColor)
+				return
+			}
+			if err := core.EncryptFile(fileIn, fileOut, password, bar); err != nil {
+				bars.Fail(bar, err, noEmojiAndColor)
+				return
+			}
+			bar.SetCurrent(bar.Total())
+			bar.Set("status", format.CondPrefix("🔒", "", noEmojiAndColor))
+			numProcessed.Add(1)
+		}()
+	}
+
+	wg.Wait()
+	barPool.Stop()
+	return numProcessed.Load(), nil
 }
 
 func decrypt(cCtx *cli.Context) error {
@@ -179,10 +223,47 @@ func decrypt(cCtx *cli.Context) error {
 	}
 
 	startTime := time.Now()
-	if err := core.DecryptFiles(paths, outputDir, password, overwrite, noEmojiAndColor); err != nil {
+	if err := decryptFiles(paths, outputDir, password, overwrite, noEmojiAndColor); err != nil {
 		return err
 	}
 	printDoneMessage(startTime, noEmojiAndColor)
 
+	return nil
+}
+
+func decryptFiles(paths []string, outputDir, password string, overwrite, noEmojiAndColor bool) error {
+	var wg sync.WaitGroup
+
+	barPool, pbars := bars.NewPool(paths, noEmojiAndColor)
+	if err := barPool.Start(); err != nil {
+		return err
+	}
+
+	wg.Add(len(paths))
+	for i := 0; i < len(paths); i++ {
+		bar := pbars[i]
+		fileIn := paths[i]
+		go func() {
+			defer wg.Done()
+			defer bar.Finish()
+			fileOut := strings.TrimSuffix(fileIn, ".eddy")
+			if outputDir != "" {
+				fileOut = filepath.Join(outputDir, filepath.Base(fileOut))
+			}
+			if _, err := os.Stat(fileOut); !errors.Is(err, os.ErrNotExist) && !overwrite {
+				bars.Fail(bar, errors.New("output already exists"), noEmojiAndColor)
+				return
+			}
+			if err := core.DecryptFile(fileIn, fileOut, password, bar); err != nil {
+				bars.Fail(bar, err, noEmojiAndColor)
+				return
+			}
+			bar.SetCurrent(bar.Total())
+			bar.Set("status", format.CondPrefix("🔓", "", noEmojiAndColor))
+		}()
+	}
+
+	wg.Wait()
+	barPool.Stop()
 	return nil
 }

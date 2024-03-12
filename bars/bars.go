@@ -3,8 +3,8 @@ package bars
 import (
 	"path/filepath"
 
-	"github.com/70sh1/eddy/core/format"
-	"github.com/70sh1/eddy/core/pathutils"
+	"github.com/70sh1/eddy/format"
+	"github.com/70sh1/eddy/pathutils"
 	"github.com/cheggaaa/pb/v3"
 	"github.com/fatih/color"
 )

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/70sh1/eddy/core/testutils"
+	"github.com/70sh1/eddy/testutils"
 	"github.com/cheggaaa/pb/v3"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/blake2b"
@@ -230,7 +230,7 @@ func TestEncryptDecryptFile(t *testing.T) {
 		inputFileContent, err := os.ReadFile(input)
 		testutils.PanicIfErr(err)
 		bar := &pb.ProgressBar{}
-		err = encryptFile(input, output, password, bar)
+		err = EncryptFile(input, output, password, bar)
 		require.NoError(t, err)
 		require.FileExists(t, output)
 		outputFileContent, err := os.ReadFile(output)
@@ -257,7 +257,7 @@ func testDecryptFile(t *testing.T, dir string) {
 		inputFileContent, err := os.ReadFile(input)
 		testutils.PanicIfErr(err)
 		bar := &pb.ProgressBar{}
-		err = decryptFile(input, output, password, bar)
+		err = DecryptFile(input, output, password, bar)
 		require.NoError(t, err)
 		require.FileExists(t, output)
 		outputFileContent, err := os.ReadFile(output)
@@ -276,7 +276,7 @@ func TestDecryptFileError(t *testing.T) {
 
 	input := filepath.Join(dir, "small.txt.eddy")
 	output := strings.TrimSuffix(input, ".eddy")
-	err = decryptFile(input, output, "wrong-password", &pb.ProgressBar{})
+	err = DecryptFile(input, output, "wrong-password", &pb.ProgressBar{})
 	require.Error(t, err)
 	require.NoFileExists(t, output)
 

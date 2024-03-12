@@ -7,12 +7,9 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
-	"sync"
 
-	"github.com/70sh1/eddy/core/bars"
-	"github.com/70sh1/eddy/core/format"
-	"github.com/70sh1/eddy/core/pathutils"
+	"github.com/70sh1/eddy/format"
+	"github.com/70sh1/eddy/pathutils"
 	"github.com/cheggaaa/pb/v3"
 )
 
@@ -53,7 +50,7 @@ func verifyFile(dec *decryptor, expectedTag []byte, bar *pb.ProgressBar) (bool, 
 	return true, nil
 }
 
-func decryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
+func DecryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	processor, err := newProcessor(pathIn, password, Decryption)
 	if err != nil {
 		return err
@@ -99,42 +96,5 @@ func decryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 		return err
 	}
 
-	return nil
-}
-
-func DecryptFiles(paths []string, outputDir, password string, overwrite, noEmojiAndColor bool) error {
-	var wg sync.WaitGroup
-
-	barPool, pbars := bars.NewPool(paths, noEmojiAndColor)
-	if err := barPool.Start(); err != nil {
-		return err
-	}
-
-	wg.Add(len(paths))
-	for i := 0; i < len(paths); i++ {
-		bar := pbars[i]
-		fileIn := paths[i]
-		go func() {
-			defer wg.Done()
-			defer bar.Finish()
-			fileOut := strings.TrimSuffix(fileIn, ".eddy")
-			if outputDir != "" {
-				fileOut = filepath.Join(outputDir, filepath.Base(fileOut))
-			}
-			if _, err := os.Stat(fileOut); !errors.Is(err, os.ErrNotExist) && !overwrite {
-				bars.Fail(bar, errors.New("output already exists"), noEmojiAndColor)
-				return
-			}
-			if err := decryptFile(fileIn, fileOut, password, bar); err != nil {
-				bars.Fail(bar, err, noEmojiAndColor)
-				return
-			}
-			bar.SetCurrent(bar.Total())
-			bar.Set("status", format.CondPrefix("🔓", "", noEmojiAndColor))
-		}()
-	}
-
-	wg.Wait()
-	barPool.Stop()
 	return nil
 }

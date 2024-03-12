@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/70sh1/eddy/core/testutils"
+	"github.com/70sh1/eddy/testutils"
 	"github.com/stretchr/testify/require"
 )
 
