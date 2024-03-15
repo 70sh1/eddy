@@ -155,27 +155,17 @@ func TestEncryptorReadEOF(t *testing.T) {
 	dir := testutils.TestFilesSetup()
 	defer testutils.TestFilesCleanup(dir)
 
-	source, err := os.Open(filepath.Join(dir, "empty.txt"))
+	proc, err := newProcessor(filepath.Join(dir, "empty.txt"), password, Encryption)
 	if err != nil {
-		source.Close()
+		proc.source.Close()
 		panic(err)
 	}
-	defer source.Close()
-	nonce := make([]byte, chacha20.NonceSize)
-	salt := make([]byte, 16)
-	key, err := deriveKey(password, salt)
-	testutils.PanicIfErr(err)
-	blakeKey := make([]byte, 32)
-	c, err := chacha20.NewUnauthenticatedCipher(key, nonce)
-	testutils.PanicIfErr(err)
-	c.XORKeyStream(blakeKey, blakeKey)
-	blake, err := blake2b.New512(blakeKey)
-	testutils.PanicIfErr(err)
+	defer proc.source.Close()
 
-	encryptor := &encryptor{&processor{c, blake, source, nonce, salt, 0}}
+	enc := &encryptor{proc}
 	buf := make([]byte, 128)
 
-	n, err := encryptor.Read(buf)
+	n, err := enc.Read(buf)
 	require.ErrorIs(t, err, io.EOF)
 	require.Equal(t, n, 0)
 	require.Equal(t, buf, make([]byte, 128))
