@@ -6,20 +6,17 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
-	"syscall"
 	"time"
 
-	"github.com/70sh1/eddy/bars"
 	"github.com/70sh1/eddy/core"
 	"github.com/70sh1/eddy/format"
 	"github.com/70sh1/eddy/pathutils"
+	"github.com/70sh1/eddy/ui"
 	"github.com/fatih/color"
 	"github.com/urfave/cli/v2"
-	"golang.org/x/term"
 )
 
 func main() {
@@ -92,28 +89,6 @@ func main() {
 	}
 }
 
-func askPassword(mode core.Mode, noEmojiAndColor bool) (string, error) {
-	fmt.Print(format.CondPrefix("🔑 ", "Password: ", noEmojiAndColor))
-	password, err := term.ReadPassword(int(syscall.Stdin))
-	if err != nil {
-		return "", err
-	}
-	fmt.Print("\r")
-	if mode == core.Encryption {
-		fmt.Print(format.CondPrefix("🔑 ", "Confirm password: ", noEmojiAndColor))
-		password2, err := term.ReadPassword(int(syscall.Stdin))
-		if err != nil {
-			return "", err
-		}
-		if !slices.Equal(password, password2) {
-			fmt.Print("\r")
-			return "", errors.New("passwords do not match")
-		}
-	}
-
-	return string(password), nil
-}
-
 func printDoneMessage(startTime time.Time, noEmojiAndColor bool) {
 	fmt.Println()
 	deltaTime := time.Since(startTime).Round(time.Millisecond)
@@ -136,7 +111,7 @@ func encrypt(cCtx *cli.Context) error {
 		return err
 	}
 	if password == "" && passGenLen == 0 {
-		if password, err = askPassword(core.Encryption, noEmojiAndColor); err != nil {
+		if password, err = ui.AskPassword(core.Encryption, noEmojiAndColor); err != nil {
 			return err
 		}
 		passGenLen = 6
@@ -169,7 +144,7 @@ func EncryptFiles(paths []string, outputDir, password string, overwrite, noEmoji
 	var wg sync.WaitGroup
 	var numProcessed atomic.Uint64
 
-	barPool, pbars := bars.NewPool(paths, noEmojiAndColor)
+	barPool, pbars := ui.NewBarPool(paths, noEmojiAndColor)
 	if err := barPool.Start(); err != nil {
 		return 0, err
 	}
@@ -186,11 +161,11 @@ func EncryptFiles(paths []string, outputDir, password string, overwrite, noEmoji
 				fileOut = filepath.Join(outputDir, filepath.Base(fileOut))
 			}
 			if _, err := os.Stat(fileOut); !errors.Is(err, os.ErrNotExist) && !overwrite {
-				bars.Fail(bar, errors.New("output already exists"), noEmojiAndColor)
+				ui.BarFail(bar, errors.New("output already exists"), noEmojiAndColor)
 				return
 			}
 			if err := core.EncryptFile(fileIn, fileOut, password, bar); err != nil {
-				bars.Fail(bar, err, noEmojiAndColor)
+				ui.BarFail(bar, err, noEmojiAndColor)
 				return
 			}
 			bar.SetCurrent(bar.Total())
@@ -217,7 +192,7 @@ func decrypt(cCtx *cli.Context) error {
 		return err
 	}
 	if password == "" {
-		if password, err = askPassword(core.Decryption, noEmojiAndColor); err != nil {
+		if password, err = ui.AskPassword(core.Decryption, noEmojiAndColor); err != nil {
 			return err
 		}
 	}
@@ -234,7 +209,7 @@ func decrypt(cCtx *cli.Context) error {
 func decryptFiles(paths []string, outputDir, password string, overwrite, noEmojiAndColor bool) error {
 	var wg sync.WaitGroup
 
-	barPool, pbars := bars.NewPool(paths, noEmojiAndColor)
+	barPool, pbars := ui.NewBarPool(paths, noEmojiAndColor)
 	if err := barPool.Start(); err != nil {
 		return err
 	}
@@ -251,11 +226,11 @@ func decryptFiles(paths []string, outputDir, password string, overwrite, noEmoji
 				fileOut = filepath.Join(outputDir, filepath.Base(fileOut))
 			}
 			if _, err := os.Stat(fileOut); !errors.Is(err, os.ErrNotExist) && !overwrite {
-				bars.Fail(bar, errors.New("output already exists"), noEmojiAndColor)
+				ui.BarFail(bar, errors.New("output already exists"), noEmojiAndColor)
 				return
 			}
 			if err := core.DecryptFile(fileIn, fileOut, password, bar); err != nil {
-				bars.Fail(bar, err, noEmojiAndColor)
+				ui.BarFail(bar, err, noEmojiAndColor)
 				return
 			}
 			bar.SetCurrent(bar.Total())
