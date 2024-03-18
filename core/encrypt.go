@@ -12,9 +12,7 @@ import (
 	"github.com/cheggaaa/pb/v3"
 )
 
-type encryptor struct {
-	*processor
-}
+type encryptor processor
 
 // Reads up to len(b) bytes from encryptor's source (file) into buffer b, truncates it if n < len(b),
 // XOR it, updates the encryptor's MAC with the resulting slice,
@@ -48,7 +46,7 @@ func EncryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	if err != nil {
 		return err
 	}
-	enc := &encryptor{processor}
+	enc := (*encryptor)(processor)
 	defer enc.source.Close()
 
 	tmpFile, err := os.CreateTemp(filepath.Dir(pathOut), "*.tmp")

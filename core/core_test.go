@@ -140,11 +140,12 @@ func TestEncryptorRead(t *testing.T) {
 	c.XORKeyStream(blakeKey, blakeKey)
 	blake, err := blake2b.New512(blakeKey)
 	testutils.PanicIfErr(err)
-	encryptor := &encryptor{&processor{c, blake, source, nonce, salt, 10_485_760}}
+	enc := (*encryptor)(&processor{c, blake, source, nonce, salt, 10_485_760})
+
 	buf := make([]byte, 128)
 	expectedBuf := []byte{1, 162, 190, 84, 106, 208, 57, 159, 172, 57, 227, 136, 60, 166, 145, 17, 0, 194, 255, 76, 197, 228, 129, 157, 209, 248, 40, 93, 149, 211, 221, 109, 251, 214, 18, 213, 230, 42, 48, 214, 28, 60, 84, 169, 94, 135, 212, 110, 216, 143, 78, 168, 171, 60, 206, 127, 138, 131, 57, 79, 169, 166, 157, 219, 115, 171, 115, 19, 100, 249, 149, 39, 99, 164, 190, 150, 102, 46, 156, 23, 148, 112, 204, 102, 2, 56, 27, 250, 128, 7, 62, 172, 130, 233, 89, 76, 59, 55, 12, 241, 49, 134, 10, 182, 246, 217, 80, 208, 15, 188, 111, 110, 133, 243, 36, 243, 154, 146, 82, 187, 233, 225, 64, 212, 185, 168, 78, 20}
 
-	n, err := encryptor.Read(buf)
+	n, err := enc.Read(buf)
 
 	require.NoError(t, err)
 	require.Equal(t, 128, n)
@@ -162,7 +163,7 @@ func TestEncryptorReadEOF(t *testing.T) {
 	}
 	defer proc.source.Close()
 
-	enc := &encryptor{proc}
+	enc := (*encryptor)(proc)
 	buf := make([]byte, 128)
 
 	n, err := enc.Read(buf)
@@ -179,12 +180,12 @@ func TestDecryptorRead(t *testing.T) {
 	processor, err := newProcessor(source, password, Decryption)
 	testutils.PanicIfErr(err)
 	defer processor.source.Close()
-	decryptor := &decryptor{processor}
-	decryptor.source.Read(make([]byte, 64)) // Skip tag
+	dec := (*decryptor)(processor)
+	dec.source.Read(make([]byte, 64)) // Skip tag
 	buf := make([]byte, 128)
 	expectedBuf := []byte("Hello, world.\nSome text!")
 
-	n, err := decryptor.Read(buf)
+	n, err := dec.Read(buf)
 	buf = buf[:n]
 
 	require.NoError(t, err)
@@ -201,11 +202,12 @@ func TestDecryptorReadEOF(t *testing.T) {
 	testutils.PanicIfErr(err)
 
 	defer processor.source.Close()
-	decryptor := &decryptor{processor}
-	decryptor.source.Read(make([]byte, 64)) // Skip tag
+	dec := (*decryptor)(processor)
+
+	dec.source.Read(make([]byte, 64)) // Skip tag
 	buf := make([]byte, 128)
 
-	n, err := decryptor.Read(buf)
+	n, err := dec.Read(buf)
 
 	require.ErrorIs(t, err, io.EOF)
 	require.Equal(t, n, 0)

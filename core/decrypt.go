@@ -13,9 +13,7 @@ import (
 	"github.com/cheggaaa/pb/v3"
 )
 
-type decryptor struct {
-	*processor
-}
+type decryptor processor
 
 // Reads up to len(b) bytes from decryptor's source (file) into buffer b, truncates it if n < len(b),
 // XORs it and returns number of bytes read and error.
@@ -61,7 +59,7 @@ func DecryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	if err != nil {
 		return err
 	}
-	dec := &decryptor{processor}
+	dec := (*decryptor)(processor)
 	defer dec.source.Close()
 
 	bar.Set("filesize", format.FormatSize(dec.sourceSize))
