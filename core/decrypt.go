@@ -29,24 +29,24 @@ func (d *decryptor) Read(b []byte) (int, error) {
 
 // Calculates the MAC tag of the given file and compares it with the expected tag.
 // Should be called before decryption.
-func verify(dec *decryptor, bar *pb.ProgressBar) (bool, error) {
+func (d *decryptor) verify(bar *pb.ProgressBar) (bool, error) {
 	expectedTag := make([]byte, 64)
-	n, err := io.ReadFull(dec.source, expectedTag)
+	n, err := io.ReadFull(d.source, expectedTag)
 	if n != 64 {
 		return false, fmt.Errorf("failed to read MAC tag; %v", err)
 	}
 
-	sourceProxy := bar.NewProxyReader(dec.source)
-	if _, err := io.Copy(dec.blake, sourceProxy); err != nil {
+	sourceProxy := bar.NewProxyReader(d.source)
+	if _, err := io.Copy(d.blake, sourceProxy); err != nil {
 		return false, err
 	}
 
 	// Reset file offset back to the header end
-	if _, err := dec.source.Seek(headerLen, 0); err != nil {
+	if _, err := d.source.Seek(headerLen, 0); err != nil {
 		return false, err
 	}
 
-	actualTag := dec.blake.Sum(nil)
+	actualTag := d.blake.Sum(nil)
 	if subtle.ConstantTimeCompare(expectedTag, actualTag) != 1 {
 		return false, nil
 	}
@@ -73,7 +73,7 @@ func DecryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	defer pathutils.CloseAndRemove(tmpFile)
 
 	// Verify file
-	fileIsValid, err := verify(dec, bar)
+	fileIsValid, err := dec.verify(bar)
 	if err != nil {
 		return fmt.Errorf("error verifying file; %v", err)
 	}
