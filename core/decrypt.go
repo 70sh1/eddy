@@ -31,7 +31,13 @@ func (d *decryptor) Read(b []byte) (int, error) {
 
 // Calculates the MAC tag of the given file and compares it with the expected tag.
 // Should be called before decryption.
-func verifyFile(dec *decryptor, expectedTag []byte, bar *pb.ProgressBar) (bool, error) {
+func verify(dec *decryptor, bar *pb.ProgressBar) (bool, error) {
+	expectedTag := make([]byte, 64)
+	n, err := io.ReadFull(dec.source, expectedTag)
+	if n != 64 {
+		return false, fmt.Errorf("failed to read MAC tag; %v", err)
+	}
+
 	sourceProxy := bar.NewProxyReader(dec.source)
 	if _, err := io.Copy(dec.blake, sourceProxy); err != nil {
 		return false, err
@@ -69,12 +75,7 @@ func DecryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	defer pathutils.CloseAndRemove(tmpFile)
 
 	// Verify file
-	expectedTag := make([]byte, 64)
-	n, err := io.ReadFull(dec.source, expectedTag)
-	if n != 64 {
-		return fmt.Errorf("failed to read MAC tag; %v", err)
-	}
-	fileIsValid, err := verifyFile(dec, expectedTag, bar)
+	fileIsValid, err := verify(dec, bar)
 	if err != nil {
 		return fmt.Errorf("error verifying file; %v", err)
 	}
