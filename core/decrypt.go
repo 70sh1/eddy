@@ -35,7 +35,7 @@ func (d *decryptor) verify(progress io.WriteCloser) (bool, error) {
 	}
 
 	multi := io.MultiWriter(d.blake, progress)
-	if _, err := io.Copy(multi, d.source); err != nil {
+	if _, err := io.CopyBuffer(multi, d.source, make([]byte, 2048*2048)); err != nil {
 		return false, err
 	}
 
@@ -78,7 +78,7 @@ func DecryptFile(source *os.File, pathOut, password string, progress io.WriteClo
 
 	// Decrypt
 	multi := io.MultiWriter(tmpFile, progress)
-	if _, err := io.Copy(multi, dec); err != nil {
+	if _, err := io.CopyBuffer(multi, dec, make([]byte, 2048*2048)); err != nil {
 		return err
 	}
 
