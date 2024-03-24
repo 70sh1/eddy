@@ -69,26 +69,31 @@ func TestNewProcessor(t *testing.T) {
 	dir := testutils.TestFilesSetup()
 	defer testutils.TestFilesCleanup(dir)
 
-	files := []string{filepath.Join(dir, "big.txt"), filepath.Join(dir, "small.txt")}
-	fileSizes := []int64{10_485_760, 24}
+	pathsIn := []string{filepath.Join(dir, "big.txt"), filepath.Join(dir, "small.txt")}
+	var filesIn []*os.File
+	for _, path := range pathsIn {
+		file, err := os.Open(path)
+		testutils.PanicIfErr(err)
+		filesIn = append(filesIn, file)
+	}
 
-	for i := 0; i < len(files); i++ {
-		processor, err := newProcessor(files[i], password, Encryption)
+	for _, file := range filesIn {
+		processor, err := newProcessor(file, password, Encryption)
 		require.NoError(t, err)
 		processor.source.Close()
 		require.NotNil(t, processor.c)
 		require.NotNil(t, processor.source)
-		require.Equal(t, fileSizes[i], processor.sourceSize)
 		require.Len(t, processor.nonce, chacha20.NonceSize)
 		require.Len(t, processor.scryptSalt, 16)
 	}
 
-	processor, err := newProcessor(filepath.Join(dir, "small.txt.eddy"), password, Decryption)
+	file, err := os.Open(filepath.Join(dir, "small.txt.eddy"))
+	testutils.PanicIfErr(err)
+	processor, err := newProcessor(file, password, Decryption)
 	require.NoError(t, err)
 	processor.source.Close()
 	require.NotNil(t, processor.c)
 	require.NotNil(t, processor.source)
-	require.Equal(t, int64(116), processor.sourceSize)
 	require.Equal(t, []byte{159, 21, 91, 197, 188, 218, 176, 90, 10, 110, 138, 23}, processor.nonce)
 	require.Equal(t, []byte{39, 152, 144, 26, 35, 122, 186, 87, 36, 248, 3, 230, 164, 17, 138, 182}, processor.scryptSalt)
 }
@@ -97,25 +102,18 @@ func TestNewProcessorError(t *testing.T) {
 	dir := testutils.TestFilesSetup()
 	defer testutils.TestFilesCleanup(dir)
 
-	modes := []Mode{Encryption, Decryption}
+	emptyFile, err := os.Open(filepath.Join(dir, "empty.txt"))
+	testutils.PanicIfErr(err)
+	defer emptyFile.Close()
+	tooShortFile, err := os.Open(filepath.Join(dir, "too-short.txt.eddy"))
+	testutils.PanicIfErr(err)
+	defer tooShortFile.Close()
 
-	for _, mode := range modes {
-		processor, err := newProcessor(filepath.Join(dir, "this-doesnt-exist"), password, mode)
-		require.EqualError(t, err, "file not found")
-		require.Nil(t, processor)
-	}
-
-	for _, mode := range modes {
-		processor, err := newProcessor(filepath.Join(dir, "dir1"), password, mode)
-		require.EqualError(t, err, "processing directories is not supported")
-		require.Nil(t, processor)
-	}
-
-	processor, err := newProcessor(filepath.Join(dir, "empty.txt"), password, Decryption)
+	processor, err := newProcessor(emptyFile, password, Decryption)
 	require.ErrorContains(t, err, "error generating/reading nonce")
 	require.Nil(t, processor)
 
-	processor, err = newProcessor(filepath.Join(dir, "too-short.txt.eddy"), password, Decryption)
+	processor, err = newProcessor(tooShortFile, password, Decryption)
 	require.ErrorContains(t, err, "error generating/reading salt")
 	require.Nil(t, processor)
 }
@@ -125,10 +123,7 @@ func TestEncryptorRead(t *testing.T) {
 	defer testutils.TestFilesCleanup(dir)
 
 	source, err := os.Open(filepath.Join(dir, "big.txt"))
-	if err != nil {
-		source.Close()
-		panic(err)
-	}
+	testutils.PanicIfErr(err)
 	defer source.Close()
 	nonce := make([]byte, chacha20.NonceSize)
 	salt := make([]byte, 16)
@@ -140,7 +135,7 @@ func TestEncryptorRead(t *testing.T) {
 	c.XORKeyStream(blakeKey, blakeKey)
 	blake, err := blake2b.New512(blakeKey)
 	testutils.PanicIfErr(err)
-	enc := (*encryptor)(&processor{c, blake, source, nonce, salt, 10_485_760})
+	enc := (*encryptor)(&processor{c, blake, source, nonce, salt})
 
 	buf := make([]byte, 128)
 	expectedBuf := []byte{1, 162, 190, 84, 106, 208, 57, 159, 172, 57, 227, 136, 60, 166, 145, 17, 0, 194, 255, 76, 197, 228, 129, 157, 209, 248, 40, 93, 149, 211, 221, 109, 251, 214, 18, 213, 230, 42, 48, 214, 28, 60, 84, 169, 94, 135, 212, 110, 216, 143, 78, 168, 171, 60, 206, 127, 138, 131, 57, 79, 169, 166, 157, 219, 115, 171, 115, 19, 100, 249, 149, 39, 99, 164, 190, 150, 102, 46, 156, 23, 148, 112, 204, 102, 2, 56, 27, 250, 128, 7, 62, 172, 130, 233, 89, 76, 59, 55, 12, 241, 49, 134, 10, 182, 246, 217, 80, 208, 15, 188, 111, 110, 133, 243, 36, 243, 154, 146, 82, 187, 233, 225, 64, 212, 185, 168, 78, 20}
@@ -156,7 +151,10 @@ func TestEncryptorReadEOF(t *testing.T) {
 	dir := testutils.TestFilesSetup()
 	defer testutils.TestFilesCleanup(dir)
 
-	proc, err := newProcessor(filepath.Join(dir, "empty.txt"), password, Encryption)
+	emptyFile, err := os.Open(filepath.Join(dir, "empty.txt"))
+	testutils.PanicIfErr(err)
+
+	proc, err := newProcessor(emptyFile, password, Encryption)
 	if err != nil {
 		proc.source.Close()
 		panic(err)
@@ -176,8 +174,9 @@ func TestDecryptorRead(t *testing.T) {
 	dir := testutils.TestFilesSetup()
 	defer testutils.TestFilesCleanup(dir)
 
-	source := filepath.Join(dir, "small.txt.eddy")
-	processor, err := newProcessor(source, password, Decryption)
+	smallFile, err := os.Open(filepath.Join(dir, "small.txt.eddy"))
+	testutils.PanicIfErr(err)
+	processor, err := newProcessor(smallFile, password, Decryption)
 	testutils.PanicIfErr(err)
 	defer processor.source.Close()
 	dec := (*decryptor)(processor)
@@ -197,8 +196,9 @@ func TestDecryptorReadEOF(t *testing.T) {
 	dir := testutils.TestFilesSetup()
 	defer testutils.TestFilesCleanup(dir)
 
-	source := filepath.Join(dir, "header-only.txt.eddy")
-	processor, err := newProcessor(source, password, Decryption)
+	headerOnlyFile, err := os.Open(filepath.Join(dir, "header-only.txt.eddy"))
+	testutils.PanicIfErr(err)
+	processor, err := newProcessor(headerOnlyFile, password, Decryption)
 	testutils.PanicIfErr(err)
 
 	defer processor.source.Close()
@@ -226,8 +226,11 @@ func TestEncryptDecryptFile(t *testing.T) {
 		output := input + ".eddy"
 		inputFileContent, err := os.ReadFile(input)
 		testutils.PanicIfErr(err)
+		file, err := os.Open(input)
+		testutils.PanicIfErr(err)
 		bar := &pb.ProgressBar{}
-		err = EncryptFile(input, output, password, bar)
+		barWriter := bar.NewProxyWriter(io.Discard)
+		err = EncryptFile(file, output, password, barWriter)
 		require.NoError(t, err)
 		require.FileExists(t, output)
 		outputFileContent, err := os.ReadFile(output)
@@ -253,8 +256,11 @@ func testDecryptFile(t *testing.T, dir string) {
 		output := strings.TrimSuffix(input, ".eddy")
 		inputFileContent, err := os.ReadFile(input)
 		testutils.PanicIfErr(err)
+		file, err := os.Open(input)
+		testutils.PanicIfErr(err)
 		bar := &pb.ProgressBar{}
-		err = DecryptFile(input, output, password, bar)
+		barWriter := bar.NewProxyWriter(io.Discard)
+		err = DecryptFile(file, output, password, barWriter)
 		require.NoError(t, err)
 		require.FileExists(t, output)
 		outputFileContent, err := os.ReadFile(output)
@@ -274,7 +280,11 @@ func TestDecryptFileError(t *testing.T) {
 
 	input := filepath.Join(dir, "small.txt.eddy")
 	output := strings.TrimSuffix(input, ".eddy")
-	err = DecryptFile(input, output, "wrong-password", &pb.ProgressBar{})
+	file, err := os.Open(input)
+	testutils.PanicIfErr(err)
+	bar := &pb.ProgressBar{}
+	barWriter := bar.NewProxyWriter(io.Discard)
+	err = DecryptFile(file, output, "wrong-password", barWriter)
 	require.Error(t, err)
 	require.NoFileExists(t, output)
 }

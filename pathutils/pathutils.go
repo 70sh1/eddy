@@ -75,6 +75,28 @@ func CleanAndCheckPaths(paths []string, outputDir string) ([]string, string, err
 	return paths, outputDir, nil
 }
 
+func OpenAndGetSize(path string) (*os.File, int64, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		file.Close()
+		if errors.Is(err, os.ErrNotExist) {
+			return nil, 0, errors.New("file not found")
+		}
+		return nil, 0, err
+	}
+	fileInfo, err := file.Stat()
+	if err != nil {
+		file.Close()
+		return nil, 0, err
+	}
+	if fileInfo.IsDir() {
+		file.Close()
+		return nil, 0, errors.New("processing directories is not supported")
+	}
+
+	return file, fileInfo.Size(), nil
+}
+
 func CloseAndRemove(f *os.File) {
 	f.Close()
 	os.Remove(f.Name())

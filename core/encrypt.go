@@ -7,9 +7,7 @@ import (
 	"path/filepath"
 	"slices"
 
-	"github.com/70sh1/eddy/format"
 	"github.com/70sh1/eddy/pathutils"
-	"github.com/cheggaaa/pb/v3"
 )
 
 type encryptor processor
@@ -41,13 +39,12 @@ func (e *encryptor) updateMac(data []byte) error {
 	return nil
 }
 
-func EncryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
-	processor, err := newProcessor(pathIn, password, Encryption)
+func EncryptFile(source *os.File, pathOut, password string, progress io.WriteCloser) error {
+	processor, err := newProcessor(source, password, Encryption)
 	if err != nil {
 		return err
 	}
 	enc := (*encryptor)(processor)
-	defer enc.source.Close()
 
 	tmpFile, err := os.CreateTemp(filepath.Dir(pathOut), "*.tmp")
 	if err != nil {
@@ -62,11 +59,8 @@ func EncryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 		return err
 	}
 
-	bar.Set("filesize", format.FormatSize(enc.sourceSize))
-	bar.SetTotal(enc.sourceSize)
-
-	encryptorProxy := bar.NewProxyReader(enc)
-	if _, err := io.Copy(tmpFile, encryptorProxy); err != nil {
+	multi := io.MultiWriter(tmpFile, progress)
+	if _, err := io.Copy(multi, enc); err != nil {
 		return err
 	}
 
@@ -79,7 +73,7 @@ func EncryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	}
 
 	tmpFile.Close()
-	enc.source.Close()
+	source.Close()
 	if err := os.Rename(tmpFile.Name(), pathOut); err != nil {
 		return err
 	}

@@ -8,9 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/70sh1/eddy/format"
 	"github.com/70sh1/eddy/pathutils"
-	"github.com/cheggaaa/pb/v3"
 )
 
 type decryptor processor
@@ -27,17 +25,17 @@ func (d *decryptor) Read(b []byte) (int, error) {
 	return 0, io.EOF
 }
 
-// Calculates the MAC tag of the given file and compares it with the expected tag.
+// Reads the MAC tag from decryptor's underlying file, calculates the actual tag of the file and compares them.
 // Should be called before decryption.
-func (d *decryptor) verify(bar *pb.ProgressBar) (bool, error) {
+func (d *decryptor) verify(progress io.WriteCloser) (bool, error) {
 	expectedTag := make([]byte, 64)
 	n, err := io.ReadFull(d.source, expectedTag)
 	if n != 64 {
 		return false, fmt.Errorf("failed to read MAC tag; %v", err)
 	}
 
-	sourceProxy := bar.NewProxyReader(d.source)
-	if _, err := io.Copy(d.blake, sourceProxy); err != nil {
+	multi := io.MultiWriter(d.blake, progress)
+	if _, err := io.Copy(multi, d.source); err != nil {
 		return false, err
 	}
 
@@ -54,17 +52,13 @@ func (d *decryptor) verify(bar *pb.ProgressBar) (bool, error) {
 	return true, nil
 }
 
-func DecryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
-	processor, err := newProcessor(pathIn, password, Decryption)
+func DecryptFile(source *os.File, pathOut, password string, progress io.WriteCloser) error {
+	processor, err := newProcessor(source, password, Decryption)
 	if err != nil {
 		return err
 	}
 	dec := (*decryptor)(processor)
 	defer dec.source.Close()
-
-	bar.Set("filesize", format.FormatSize(dec.sourceSize))
-	// We will go through the file twice so the progress bar total should be double the file size
-	bar.SetTotal(dec.sourceSize * 2)
 
 	tmpFile, err := os.CreateTemp(filepath.Dir(pathOut), "*.tmp")
 	if err != nil {
@@ -73,7 +67,7 @@ func DecryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	defer pathutils.CloseAndRemove(tmpFile)
 
 	// Verify file
-	fileIsValid, err := dec.verify(bar)
+	fileIsValid, err := dec.verify(progress)
 	if err != nil {
 		return fmt.Errorf("error verifying file; %v", err)
 	}
@@ -83,14 +77,13 @@ func DecryptFile(pathIn, pathOut, password string, bar *pb.ProgressBar) error {
 	}
 
 	// Decrypt
-	decryptorProxy := bar.NewProxyReader(dec)
-	if _, err := io.Copy(tmpFile, decryptorProxy); err != nil {
+	multi := io.MultiWriter(tmpFile, progress)
+	if _, err := io.Copy(multi, dec); err != nil {
 		return err
 	}
 
 	tmpFile.Close()
-	dec.source.Close()
-
+	source.Close()
 	if err := os.Rename(tmpFile.Name(), pathOut); err != nil {
 		return err
 	}

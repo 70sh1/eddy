@@ -35,39 +35,19 @@ type processor struct {
 	source     *os.File
 	nonce      []byte
 	scryptSalt []byte
-	sourceSize int64
 }
 
 // Creates new ChaCha20-BLAKE2b processor with underlying "source" file.
-func newProcessor(sourcePath string, password string, mode Mode) (*processor, error) {
-	file, err := os.Open(sourcePath)
-	if err != nil {
-		file.Close()
-		if errors.Is(err, os.ErrNotExist) {
-			return nil, errors.New("file not found")
-		}
-		return nil, err
-	}
-	fileInfo, err := file.Stat()
-	if err != nil {
-		file.Close()
-		return nil, err
-	}
-	if fileInfo.IsDir() {
-		file.Close()
-		return nil, errors.New("processing directories is not supported")
-	}
-	fileSize := fileInfo.Size()
-
+func newProcessor(source *os.File, password string, mode Mode) (*processor, error) {
 	nonce := make([]byte, chacha20.NonceSize)
 	var n int
+	var err error
 	if mode == Encryption {
 		n, err = io.ReadFull(rand.Reader, nonce)
 	} else {
-		n, err = io.ReadFull(file, nonce)
+		n, err = io.ReadFull(source, nonce)
 	}
 	if n != chacha20.NonceSize {
-		file.Close()
 		return nil, fmt.Errorf("error generating/reading nonce; %v", err)
 	}
 
@@ -75,16 +55,14 @@ func newProcessor(sourcePath string, password string, mode Mode) (*processor, er
 	if mode == Encryption {
 		n, err = io.ReadFull(rand.Reader, salt)
 	} else {
-		n, err = io.ReadFull(file, salt)
+		n, err = io.ReadFull(source, salt)
 	}
 	if n != 16 {
-		file.Close()
 		return nil, fmt.Errorf("error generating/reading salt; %v", err)
 	}
 
 	key, err := deriveKey(password, salt)
 	if err != nil {
-		file.Close()
 		return nil, err
 	}
 
@@ -97,11 +75,10 @@ func newProcessor(sourcePath string, password string, mode Mode) (*processor, er
 	c.XORKeyStream(blakeKey, blakeKey)
 	blake, err := blake2b.New512(blakeKey)
 	if err != nil {
-		file.Close()
 		return nil, err
 	}
 
-	return &processor{c, blake, file, nonce, salt, fileSize}, nil
+	return &processor{c, blake, source, nonce, salt}, nil
 }
 
 // Derives a key using scrypt KDF.

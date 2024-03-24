@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -97,7 +98,6 @@ func printDoneMessage(startTime time.Time, noEmojiAndColor bool) {
 
 func encrypt(cCtx *cli.Context) error {
 	var noPasswordProvided bool
-	var numProcessed uint64
 	var err error
 
 	outputDir := cCtx.String("output")
@@ -125,7 +125,7 @@ func encrypt(cCtx *cli.Context) error {
 		noPasswordProvided = true
 	}
 
-	numProcessed, err = EncryptFiles(paths, outputDir, password, overwrite, noEmojiAndColor)
+	numProcessed, err := encryptFiles(paths, outputDir, password, overwrite, noEmojiAndColor)
 	if err != nil {
 		return err
 	}
@@ -140,7 +140,7 @@ func encrypt(cCtx *cli.Context) error {
 	return nil
 }
 
-func EncryptFiles(paths []string, outputDir, password string, overwrite, noEmojiAndColor bool) (uint64, error) {
+func encryptFiles(paths []string, outputDir, password string, overwrite, noEmojiAndColor bool) (uint64, error) {
 	var wg sync.WaitGroup
 	var numProcessed atomic.Uint64
 
@@ -152,22 +152,34 @@ func EncryptFiles(paths []string, outputDir, password string, overwrite, noEmoji
 	wg.Add(len(paths))
 	for i := 0; i < len(paths); i++ {
 		bar := pbars[i]
-		fileIn := paths[i]
+		pathIn := paths[i]
 		go func() {
 			defer wg.Done()
 			defer bar.Finish()
-			fileOut := fileIn + ".eddy"
+			pathOut := pathIn + ".eddy"
 			if outputDir != "" {
-				fileOut = filepath.Join(outputDir, filepath.Base(fileOut))
+				pathOut = filepath.Join(outputDir, filepath.Base(pathOut))
 			}
-			if _, err := os.Stat(fileOut); !errors.Is(err, os.ErrNotExist) && !overwrite {
+			if _, err := os.Stat(pathOut); !errors.Is(err, os.ErrNotExist) && !overwrite {
 				ui.BarFail(bar, errors.New("output already exists"), noEmojiAndColor)
 				return
 			}
-			if err := core.EncryptFile(fileIn, fileOut, password, bar); err != nil {
+			source, size, err := pathutils.OpenAndGetSize(pathIn)
+			if err != nil {
 				ui.BarFail(bar, err, noEmojiAndColor)
 				return
 			}
+			defer source.Close()
+
+			bar.SetTotal(size)
+			bar.Set("filesize", format.FormatSize(size))
+			barWriter := bar.NewProxyWriter(io.Discard)
+
+			if err := core.EncryptFile(source, pathOut, password, barWriter); err != nil {
+				ui.BarFail(bar, err, noEmojiAndColor)
+				return
+			}
+
 			bar.SetCurrent(bar.Total())
 			bar.Set("status", format.CondPrefix("🔒", "", noEmojiAndColor))
 			numProcessed.Add(1)
@@ -178,6 +190,8 @@ func EncryptFiles(paths []string, outputDir, password string, overwrite, noEmoji
 	barPool.Stop()
 	return numProcessed.Load(), nil
 }
+
+//
 
 func decrypt(cCtx *cli.Context) error {
 	var err error
@@ -217,22 +231,35 @@ func decryptFiles(paths []string, outputDir, password string, overwrite, noEmoji
 	wg.Add(len(paths))
 	for i := 0; i < len(paths); i++ {
 		bar := pbars[i]
-		fileIn := paths[i]
+		pathIn := paths[i]
 		go func() {
 			defer wg.Done()
 			defer bar.Finish()
-			fileOut := strings.TrimSuffix(fileIn, ".eddy")
+			pathOut := strings.TrimSuffix(pathIn, ".eddy")
 			if outputDir != "" {
-				fileOut = filepath.Join(outputDir, filepath.Base(fileOut))
+				pathOut = filepath.Join(outputDir, filepath.Base(pathOut))
 			}
-			if _, err := os.Stat(fileOut); !errors.Is(err, os.ErrNotExist) && !overwrite {
+			if _, err := os.Stat(pathOut); !errors.Is(err, os.ErrNotExist) && !overwrite {
 				ui.BarFail(bar, errors.New("output already exists"), noEmojiAndColor)
 				return
 			}
-			if err := core.DecryptFile(fileIn, fileOut, password, bar); err != nil {
+			source, size, err := pathutils.OpenAndGetSize(pathIn)
+			if err != nil {
 				ui.BarFail(bar, err, noEmojiAndColor)
 				return
 			}
+			defer source.Close()
+
+			// We will go through the file twice so the progress bar total should be double the file size
+			bar.SetTotal(size * 2)
+			bar.Set("filesize", format.FormatSize(size))
+			barWriter := bar.NewProxyWriter(io.Discard)
+
+			if err := core.DecryptFile(source, pathOut, password, barWriter); err != nil {
+				ui.BarFail(bar, err, noEmojiAndColor)
+				return
+			}
+
 			bar.SetCurrent(bar.Total())
 			bar.Set("status", format.CondPrefix("🔓", "", noEmojiAndColor))
 		}()
