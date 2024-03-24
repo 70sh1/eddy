@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/70sh1/eddy/core"
@@ -125,11 +124,11 @@ func encrypt(cCtx *cli.Context) error {
 		noPasswordProvided = true
 	}
 
-	numProcessed, err := encryptFiles(paths, outputDir, password, overwrite, noEmojiAndColor)
+	processedAny, err := encryptFiles(paths, outputDir, password, overwrite, noEmojiAndColor)
 	if err != nil {
 		return err
 	}
-	if noPasswordProvided && (numProcessed > 0) {
+	if noPasswordProvided && processedAny {
 		fmt.Println()
 		fmt.Printf(
 			format.CondPrefix("🔑 ", "NOTE: This passphrase was generated and used: '%v'\n", noEmojiAndColor), password,
@@ -140,13 +139,13 @@ func encrypt(cCtx *cli.Context) error {
 	return nil
 }
 
-func encryptFiles(paths []string, outputDir, password string, overwrite, noEmojiAndColor bool) (uint64, error) {
+func encryptFiles(paths []string, outputDir, password string, overwrite, noEmojiAndColor bool) (bool, error) {
 	var wg sync.WaitGroup
-	var numProcessed atomic.Uint64
+	var processedAny bool
 
 	barPool, pbars := ui.NewBarPool(paths, noEmojiAndColor)
 	if err := barPool.Start(); err != nil {
-		return 0, err
+		return false, err
 	}
 
 	wg.Add(len(paths))
@@ -182,13 +181,13 @@ func encryptFiles(paths []string, outputDir, password string, overwrite, noEmoji
 
 			bar.SetCurrent(bar.Total())
 			bar.Set("status", format.CondPrefix("🔒", "", noEmojiAndColor))
-			numProcessed.Add(1)
+			processedAny = true
 		}()
 	}
 
 	wg.Wait()
 	barPool.Stop()
-	return numProcessed.Load(), nil
+	return processedAny, nil
 }
 
 //
