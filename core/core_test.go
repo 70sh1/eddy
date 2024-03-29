@@ -214,6 +214,43 @@ func TestDecryptorReadEOF(t *testing.T) {
 	require.Equal(t, buf, make([]byte, 128))
 }
 
+func TestVerify(t *testing.T) {
+	dir := testutils.TestFilesSetup()
+	defer testutils.TestFilesCleanup(dir)
+
+	smallFile, err := os.Open(filepath.Join(dir, "small.txt.eddy"))
+	testutils.PanicIfErr(err)
+	defer smallFile.Close()
+	headerOnlyFile, err := os.Open(filepath.Join(dir, "header-only.txt.eddy"))
+	testutils.PanicIfErr(err)
+	defer headerOnlyFile.Close()
+
+	files := []*os.File{smallFile, headerOnlyFile}
+
+	for _, file := range files {
+		proc, err := newProcessor(file, password, Decryption)
+		testutils.PanicIfErr(err)
+		dec := (*decryptor)(proc)
+
+		valid, err := dec.verify(io.Discard)
+		require.NoError(t, err)
+		require.True(t, valid)
+	}
+
+	file, err := os.Open(filepath.Join(dir, "big.txt"))
+	testutils.PanicIfErr(err)
+	defer file.Close()
+
+	proc, err := newProcessor(file, password, Decryption)
+	testutils.PanicIfErr(err)
+
+	dec := (*decryptor)(proc)
+
+	valid, err := dec.verify(io.Discard)
+	require.NoError(t, err)
+	require.False(t, valid)
+}
+
 func TestEncryptDecryptFile(t *testing.T) {
 	dir := testutils.TestFilesSetup()
 	defer testutils.TestFilesCleanup(dir)
