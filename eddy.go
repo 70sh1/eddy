@@ -64,6 +64,10 @@ func main() {
 				Aliases: []string{"n"},
 				Usage:   "disable emojis in output",
 			},
+			&cli.BoolFlag{
+				Name:  "force",
+				Usage: "force decrypt (bypass file authentication)",
+			},
 			&cli.StringFlag{
 				Name:  "unsafe-password",
 				Usage: "replace password prompt with the provided `PASSWORD`",
@@ -100,8 +104,8 @@ func encrypt(cCtx *cli.Context) error {
 	var err error
 
 	outputDir := cCtx.String("output")
-	passGenLen := cCtx.Int("passgenlen")
 	overwrite := cCtx.Bool("overwrite")
+	passGenLen := cCtx.Int("passgenlen")
 	noEmojiAndColor := cCtx.Bool("no-emoji")
 	password := cCtx.String("unsafe-password")
 	paths := append(cCtx.Args().Tail(), cCtx.Args().First())
@@ -195,6 +199,7 @@ func encryptFiles(paths []string, outputDir, password string, overwrite, noEmoji
 func decrypt(cCtx *cli.Context) error {
 	var err error
 
+	force := cCtx.Bool("force")
 	outputDir := cCtx.String("output")
 	overwrite := cCtx.Bool("overwrite")
 	noEmojiAndColor := cCtx.Bool("no-emoji")
@@ -211,7 +216,8 @@ func decrypt(cCtx *cli.Context) error {
 	}
 
 	startTime := time.Now()
-	if err := decryptFiles(paths, outputDir, password, overwrite, noEmojiAndColor); err != nil {
+	err = decryptFiles(paths, outputDir, password, overwrite, force, noEmojiAndColor)
+	if err != nil {
 		return err
 	}
 	printDoneMessage(startTime, noEmojiAndColor)
@@ -219,7 +225,7 @@ func decrypt(cCtx *cli.Context) error {
 	return nil
 }
 
-func decryptFiles(paths []string, outputDir, password string, overwrite, noEmojiAndColor bool) error {
+func decryptFiles(paths []string, outputDir, password string, overwrite, force, noEmojiAndColor bool) error {
 	var wg sync.WaitGroup
 
 	barPool, pbars := ui.NewBarPool(paths, noEmojiAndColor)
@@ -254,7 +260,8 @@ func decryptFiles(paths []string, outputDir, password string, overwrite, noEmoji
 			bar.Set("filesize", format.FormatSize(size))
 			barWriter := bar.NewProxyWriter(io.Discard)
 
-			if err := core.DecryptFile(source, pathOut, password, barWriter); err != nil {
+			err = core.DecryptFile(source, pathOut, password, force, barWriter)
+			if err != nil {
 				ui.BarFail(bar, err, noEmojiAndColor)
 				return
 			}

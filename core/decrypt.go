@@ -39,11 +39,6 @@ func (d *decryptor) verify(progress io.WriteCloser) (bool, error) {
 		return false, err
 	}
 
-	// Reset file offset back to the header end
-	if _, err := d.source.Seek(headerLen, 0); err != nil {
-		return false, err
-	}
-
 	actualTag := d.blake.Sum(nil)
 	if subtle.ConstantTimeCompare(expectedTag, actualTag) != 1 {
 		return false, nil
@@ -52,7 +47,7 @@ func (d *decryptor) verify(progress io.WriteCloser) (bool, error) {
 	return true, nil
 }
 
-func DecryptFile(source *os.File, pathOut, password string, progress io.WriteCloser) error {
+func DecryptFile(source *os.File, pathOut, password string, force bool, progress io.WriteCloser) error {
 	processor, err := newProcessor(source, password, Decryption)
 	if err != nil {
 		return err
@@ -67,12 +62,17 @@ func DecryptFile(source *os.File, pathOut, password string, progress io.WriteClo
 	defer pathutils.CloseAndRemove(tmpFile)
 
 	// Verify file
-	fileIsValid, err := dec.verify(progress)
-	if err != nil {
-		return fmt.Errorf("error verifying file; %v", err)
+	if !force {
+		valid, err := dec.verify(progress)
+		if err != nil {
+			return fmt.Errorf("error verifying file; %v", err)
+		}
+		if !valid {
+			err = errors.New("incorrect password or corrupt/forged data")
+			return err
+		}
 	}
-	if !fileIsValid {
-		err = errors.New("incorrect password or corrupt/forged data")
+	if _, err := source.Seek(headerLen, 0); err != nil {
 		return err
 	}
 

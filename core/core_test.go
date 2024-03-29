@@ -260,7 +260,7 @@ func testDecryptFile(t *testing.T, dir string) {
 		testutils.PanicIfErr(err)
 		bar := &pb.ProgressBar{}
 		barWriter := bar.NewProxyWriter(io.Discard)
-		err = DecryptFile(file, output, password, barWriter)
+		err = DecryptFile(file, output, password, false, barWriter)
 		require.NoError(t, err)
 		require.FileExists(t, output)
 		outputFileContent, err := os.ReadFile(output)
@@ -284,7 +284,7 @@ func TestDecryptFileError(t *testing.T) {
 	testutils.PanicIfErr(err)
 	bar := &pb.ProgressBar{}
 	barWriter := bar.NewProxyWriter(io.Discard)
-	err = DecryptFile(file, output, "wrong-password", barWriter)
+	err = DecryptFile(file, output, "wrong-password", false, barWriter)
 	require.Error(t, err)
 	require.NoFileExists(t, output)
 }
