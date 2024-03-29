@@ -67,8 +67,7 @@ func DecryptFile(source *os.File, pathOut, password string, force bool, progress
 			return fmt.Errorf("error verifying file; %v", err)
 		}
 		if !valid {
-			err = errors.New("incorrect password or corrupt/forged data")
-			return err
+			return errors.New("incorrect password or corrupt/forged data")
 		}
 	}
 	if _, err := source.Seek(headerLen, 0); err != nil {
