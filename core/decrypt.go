@@ -53,7 +53,6 @@ func DecryptFile(source *os.File, pathOut, password string, force bool, progress
 		return err
 	}
 	dec := (*decryptor)(processor)
-	defer dec.source.Close()
 
 	tmpFile, err := os.CreateTemp(filepath.Dir(pathOut), "*.tmp")
 	if err != nil {
