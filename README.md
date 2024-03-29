@@ -28,6 +28,8 @@ _eddy_ is a simple and fast CLI file encryption tool. It features concurrent fil
 
 `--no-emoji, -n` - disable emojis and color in output.
 
+`--force` - force decrypt. Bypasses file authentication and, inherently, password check. Useful when the encrypted file is corrupt (damaged) but you still want to decrypt it.
+
 `--unsafe-password` - replace interactive password prompt with the provided value. Intended for scripts/automation and reading password from environment variables. The "unsafe" prefix here is to indicate that the provided value will likely stay in the shell command history which is not safe.
 
 ### Examples
