@@ -39,6 +39,8 @@ jobs:
         DIR="$(mktemp -d)"
         mkdir "$DIR/eddy"
         go build -trimpath -ldflags="-s -w" -o "$DIR/eddy"
+        cp LICENSE "$DIR/eddy"
+        cp README.md "$DIR/eddy"
         if [ "$GOOS" == "windows" ]; then
           (cd "$DIR"; zip "eddy.zip" -r eddy)
           mv "$DIR/eddy.zip" "eddy-$VERSION-$GOOS-$GOARCH.zip"
