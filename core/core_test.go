@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/70sh1/eddy/testutils"
-	"github.com/cheggaaa/pb/v3"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/blake2b"
 	"golang.org/x/crypto/chacha20"
@@ -265,9 +264,7 @@ func TestEncryptDecryptFile(t *testing.T) {
 		testutils.PanicIfErr(err)
 		file, err := os.Open(input)
 		testutils.PanicIfErr(err)
-		bar := &pb.ProgressBar{}
-		barWriter := bar.NewProxyWriter(io.Discard)
-		err = EncryptFile(file, output, password, barWriter)
+		err = EncryptFile(file, output, password, io.Discard)
 		require.NoError(t, err)
 		require.FileExists(t, output)
 		outputFileContent, err := os.ReadFile(output)
@@ -295,9 +292,7 @@ func testDecryptFile(t *testing.T, dir string) {
 		testutils.PanicIfErr(err)
 		file, err := os.Open(input)
 		testutils.PanicIfErr(err)
-		bar := &pb.ProgressBar{}
-		barWriter := bar.NewProxyWriter(io.Discard)
-		err = DecryptFile(file, output, password, false, barWriter)
+		err = DecryptFile(file, output, password, false, io.Discard)
 		require.NoError(t, err)
 		require.FileExists(t, output)
 		outputFileContent, err := os.ReadFile(output)
@@ -319,9 +314,7 @@ func TestDecryptFileError(t *testing.T) {
 	output := strings.TrimSuffix(input, ".eddy")
 	file, err := os.Open(input)
 	testutils.PanicIfErr(err)
-	bar := &pb.ProgressBar{}
-	barWriter := bar.NewProxyWriter(io.Discard)
-	err = DecryptFile(file, output, "wrong-password", false, barWriter)
+	err = DecryptFile(file, output, "wrong-password", false, io.Discard)
 	require.Error(t, err)
 	require.NoFileExists(t, output)
 }

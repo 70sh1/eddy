@@ -27,7 +27,7 @@ func (d *decryptor) Read(b []byte) (int, error) {
 
 // Reads the MAC tag from decryptor's underlying file, calculates the actual tag of the file and compares them.
 // Should be called before decryption.
-func (d *decryptor) verify(progress io.WriteCloser) (bool, error) {
+func (d *decryptor) verify(progress io.Writer) (bool, error) {
 	expectedTag := make([]byte, 64)
 	n, err := io.ReadFull(d.source, expectedTag)
 	if n != 64 {
@@ -47,7 +47,7 @@ func (d *decryptor) verify(progress io.WriteCloser) (bool, error) {
 	return true, nil
 }
 
-func DecryptFile(source *os.File, pathOut, password string, force bool, progress io.WriteCloser) error {
+func DecryptFile(source *os.File, pathOut, password string, force bool, progress io.Writer) error {
 	processor, err := newProcessor(source, password, Decryption)
 	if err != nil {
 		return err

@@ -39,7 +39,7 @@ func (e *encryptor) updateMac(data []byte) error {
 	return nil
 }
 
-func EncryptFile(source *os.File, pathOut, password string, progress io.WriteCloser) error {
+func EncryptFile(source *os.File, pathOut, password string, progress io.Writer) error {
 	processor, err := newProcessor(source, password, Encryption)
 	if err != nil {
 		return err
