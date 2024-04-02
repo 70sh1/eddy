@@ -16,13 +16,14 @@ import (
 )
 
 // Creates new progress bar pool.
-func NewBarPool(paths []string, noEmojiAndColor bool) (pool *pb.Pool, bars []*pb.ProgressBar) {
+func NewBarPool(paths []string, noEmojiAndColor bool) (*pb.Pool, []*pb.ProgressBar) {
 	barTmpl := `{{ string . "status" }} {{ string . "filename" }} {{ string . "filesize" }} {{ bar . "[" "-"  ">" " " "]" }} {{ string . "error" }}`
-	for _, path := range paths {
+	bars := make([]*pb.ProgressBar, len(paths))
+	for i, path := range paths {
 		bar := pb.New64(1).SetTemplateString(barTmpl).SetWidth(90)
 		bar.Set("status", format.CondPrefix("  ", "", noEmojiAndColor))
 		bar.Set("filename", pathutils.FilenameOverflow(filepath.Base(path), 25))
-		bars = append(bars, bar)
+		bars[i] = bar
 	}
 	return pb.NewPool(bars...), bars
 }
