@@ -314,6 +314,7 @@ func TestDecryptFileError(t *testing.T) {
 	output := strings.TrimSuffix(input, ".eddy")
 	file, err := os.Open(input)
 	testutils.PanicIfErr(err)
+	defer file.Close()
 	err = DecryptFile(file, output, "wrong-password", false, io.Discard)
 	require.Error(t, err)
 	require.NoFileExists(t, output)
