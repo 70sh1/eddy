@@ -37,7 +37,8 @@ func TestHasDuplicates(t *testing.T) {
 		{
 			in:       []string{""},
 			expected: false,
-		}}
+		},
+	}
 	for _, tCase := range cases {
 		result := hasDuplicates(tCase.in)
 		require.Equal(t, tCase.expected, result)

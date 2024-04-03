@@ -9,7 +9,7 @@ func TestFilesSetup() string {
 	tmpDir, err := os.MkdirTemp(".", "test-tmp-*")
 	PanicIfErr(err)
 
-	if err := os.Mkdir(filepath.Join(tmpDir, "dir1"), 0700); err != nil {
+	if err := os.Mkdir(filepath.Join(tmpDir, "dir1"), 0o700); err != nil {
 		panic(err)
 	}
 
