@@ -74,7 +74,7 @@ If no password (empty one) was provided during encryption (this includes lack of
 
 
 ## How it works
-_eddy_ leverages `ChaCha20` for encryption paired with keyed `BLAKE2b` for data authentication (MAC). The `scrypt` KDF is used for producing keys.
+_eddy_ leverages `ChaCha20` for encryption paired with keyed `BLAKE2b` for data authentication (MAC). The `scrypt` KDF is used for producing keys. You can read more about the internals in the [spec file](https://github.com/70sh1/eddy/blob/main/SPEC.md).
 
 ## Acknowledgements
 [urfave/cli](https://github.com/urfave/cli) - CLI framework.
