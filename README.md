@@ -37,6 +37,9 @@ _eddy_ is a simple and fast CLI file encryption tool. It features concurrent fil
 eddy e secret.txt
 ```
 ```
+eddy e secret.txt secret2.png secret3.mp4
+```
+```
 eddy -g 8 enc secret.txt
 ```
 ```
