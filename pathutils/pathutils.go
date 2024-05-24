@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/rivo/uniseg"
 )
 
 // Checks whenever given slice of strings contains duplicates.
@@ -34,14 +36,19 @@ func hasDuplicateFilenames(s []string) bool {
 }
 
 func FilenameOverflow(s string, n int) string {
-	r := []rune(s)
-	if len(r) < n {
+	charCount := uniseg.GraphemeClusterCount(s)
+	if charCount < n {
 		return s
 	}
-	return string(r[:n]) + "..."
+	gr := uniseg.NewGraphemes(s)
+	for range n {
+		gr.Next()
+	}
+	_, to := gr.Positions()
+	return s[:to] + "..."
 }
 
-// Cleans given paths and ouputDir and checks for duplicates.
+// Cleans given paths and ouputDir (which is also assumed to be a path) and checks for duplicates.
 // Also checks for duplicate filenames if outputDir is not empty.
 // Returns cleaned paths or error if any of the checks failed.
 func CleanAndCheckPaths(paths []string, outputDir string) ([]string, string, error) {
