@@ -23,7 +23,7 @@ func main() {
 	app := &cli.App{
 		Name:    "eddy",
 		Usage:   "simple and fast file encryption",
-		Version: "1.3.1",
+		Version: "1.3.2",
 		Authors: []*cli.Author{
 			{Name: "70sh1", Email: "70sh1@proton.me"},
 		},
