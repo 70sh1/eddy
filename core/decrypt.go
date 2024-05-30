@@ -29,8 +29,8 @@ func (d *decryptor) Read(b []byte) (int, error) {
 // Should be called before decryption.
 func (d *decryptor) verify(progress io.Writer) (bool, error) {
 	expectedTag := make([]byte, 64)
-	n, err := io.ReadFull(d.source, expectedTag)
-	if n != 64 {
+	_, err := io.ReadFull(d.source, expectedTag)
+	if err != nil {
 		return false, fmt.Errorf("failed to read MAC tag; %v", err)
 	}
 
