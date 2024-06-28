@@ -2,9 +2,9 @@ name: Run tests
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   audit-and-run-tests:
@@ -12,23 +12,23 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
-    
+
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
-    - name: Set up Go
-      uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
-      with:
-        go-version: '1.22.x'
-        
-    - name: Install dependencies
-      run: go get .
-      
-    - name: Run fmt
-      run: go fmt ./...
+      - name: Set up Go
+        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
+        with:
+          go-version: "1.22.x"
 
-    - name: Run vet
-      run: go vet ./...
+      - name: Install dependencies
+        run: go get .
 
-    - name: Run tests
-      run: go test -race -shuffle=on ./...
+      - name: Run fmt
+        run: go fmt ./...
+
+      - name: Run vet
+        run: go vet ./...
+
+      - name: Run tests
+        run: go test -race -shuffle=on ./...

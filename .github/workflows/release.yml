@@ -13,46 +13,46 @@ jobs:
     strategy:
       matrix:
         include:
-          - {GOOS: linux, GOARCH: amd64}
-          - {GOOS: linux, GOARCH: arm64}
-          - {GOOS: darwin, GOARCH: amd64}
-          - {GOOS: darwin, GOARCH: arm64}
-          - {GOOS: windows, GOARCH: amd64}
+          - { GOOS: linux, GOARCH: amd64 }
+          - { GOOS: linux, GOARCH: arm64 }
+          - { GOOS: darwin, GOARCH: amd64 }
+          - { GOOS: darwin, GOARCH: arm64 }
+          - { GOOS: windows, GOARCH: amd64 }
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
-    - name: Set up Go
-      uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
-      with:
-        go-version: '1.22.x'
-        
-    - name: Install dependencies
-      run: go get .
+      - name: Set up Go
+        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
+        with:
+          go-version: "1.22.x"
 
-    - name: Build binaries
-      env:
+      - name: Install dependencies
+        run: go get .
+
+      - name: Build binaries
+        env:
           CGO_ENABLED: 0
           GOOS: ${{ matrix.GOOS }}
           GOARCH: ${{ matrix.GOARCH }}
-      run: |
-        VERSION="$(git describe --tags)"
-        DIR="$(mktemp -d)"
-        mkdir "$DIR/eddy"
-        go build -trimpath -ldflags="-s -w" -o "$DIR/eddy"
-        cp LICENSE "$DIR/eddy"
-        cp README.md "$DIR/eddy"
-        if [ "$GOOS" == "windows" ]; then
-          (cd "$DIR"; zip "eddy.zip" -r eddy)
-          mv "$DIR/eddy.zip" "eddy-$VERSION-$GOOS-$GOARCH.zip"
-        else
-          tar -cvzf "eddy-$VERSION-$GOOS-$GOARCH.tar.gz" -C "$DIR" eddy
-        fi
-        if [ "$GOOS" == "darwin" ]; then
-          mv eddy-$VERSION-darwin-$GOARCH.tar.gz eddy-$VERSION-macOS-$GOARCH.tar.gz
-        fi
+        run: |
+          VERSION="$(git describe --tags)"
+          DIR="$(mktemp -d)"
+          mkdir "$DIR/eddy"
+          go build -trimpath -ldflags="-s -w" -o "$DIR/eddy"
+          cp LICENSE "$DIR/eddy"
+          cp README.md "$DIR/eddy"
+          if [ "$GOOS" == "windows" ]; then
+            (cd "$DIR"; zip "eddy.zip" -r eddy)
+            mv "$DIR/eddy.zip" "eddy-$VERSION-$GOOS-$GOARCH.zip"
+          else
+            tar -cvzf "eddy-$VERSION-$GOOS-$GOARCH.tar.gz" -C "$DIR" eddy
+          fi
+          if [ "$GOOS" == "darwin" ]; then
+            mv eddy-$VERSION-darwin-$GOARCH.tar.gz eddy-$VERSION-macOS-$GOARCH.tar.gz
+          fi
 
-    - name: Attach binaries
-      uses: softprops/action-gh-release@d99959edae48b5ffffd7b00da66dcdb0a33a52ee # v2.0.2
-      with:
-        files: |
-          ./eddy-*
+      - name: Attach binaries
+        uses: softprops/action-gh-release@d99959edae48b5ffffd7b00da66dcdb0a33a52ee # v2.0.2
+        with:
+          files: |
+            ./eddy-*
