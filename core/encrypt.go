@@ -73,7 +73,6 @@ func EncryptFile(source *os.File, pathOut, password string, progress io.Writer) 
 	}
 
 	tmpFile.Close()
-	source.Close()
 	if err := os.Rename(tmpFile.Name(), pathOut); err != nil {
 		return err
 	}

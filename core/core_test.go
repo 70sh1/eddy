@@ -153,14 +153,14 @@ func TestEncryptorReadEOF(t *testing.T) {
 	emptyFile, err := os.Open(filepath.Join(dir, "empty.txt"))
 	testutils.PanicIfErr(err)
 
-	proc, err := newProcessor(emptyFile, password, Encryption)
+	processor, err := newProcessor(emptyFile, password, Encryption)
 	if err != nil {
-		proc.source.Close()
+		processor.source.Close()
 		panic(err)
 	}
-	defer proc.source.Close()
+	defer processor.source.Close()
 
-	enc := (*encryptor)(proc)
+	enc := (*encryptor)(processor)
 	buf := make([]byte, 128)
 
 	n, err := enc.Read(buf)
@@ -292,6 +292,7 @@ func testDecryptFile(t *testing.T, dir string) {
 		testutils.PanicIfErr(err)
 		file, err := os.Open(input)
 		testutils.PanicIfErr(err)
+		defer file.Close()
 		err = DecryptFile(file, output, password, false, io.Discard)
 		require.NoError(t, err)
 		require.FileExists(t, output)

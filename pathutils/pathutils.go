@@ -85,7 +85,6 @@ func CleanAndCheckPaths(paths []string, outputDir string) ([]string, string, err
 func OpenAndGetSize(path string) (*os.File, int64, error) {
 	file, err := os.Open(path)
 	if err != nil {
-		file.Close()
 		if errors.Is(err, os.ErrNotExist) {
 			return nil, 0, errors.New("file not found")
 		}
