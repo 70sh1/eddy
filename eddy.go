@@ -37,9 +37,9 @@ func main() {
 			noEmojiAndColor := ctx.Bool("no-emoji")
 			logPrefix := "ERROR: "
 			if !noEmojiAndColor {
-				logPrefix = color.RedString(logPrefix)
+				logPrefix = "❗ " + color.RedString(logPrefix)
 			}
-			log.SetPrefix(format.CondPrefix("❗ ", logPrefix, noEmojiAndColor))
+			log.SetPrefix(logPrefix)
 			return nil
 		},
 		Flags: []cli.Flag{
