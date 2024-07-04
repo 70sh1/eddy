@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -30,7 +31,6 @@ func main() {
 		UseShortOptionHandling: true,
 		Suggest:                true,
 		Before: func(ctx *cli.Context) error {
-			fmt.Println()
 			// Remove date/time prefix from logger
 			log.SetFlags(0)
 			// Only logging errors with log.Fatal so this prefix is set
@@ -86,6 +86,12 @@ func main() {
 				Usage:   "Decrypts provided files",
 				Action:  decrypt,
 			},
+			{
+				Name:    "generate",
+				Aliases: []string{"gen", "g"},
+				Usage:   "Generates a passhrase of the given length",
+				Action:  generate,
+			},
 		},
 	}
 	if err := app.Run(os.Args); err != nil {
@@ -121,6 +127,7 @@ func encrypt(cCtx *cli.Context) error {
 	}
 
 	startTime := time.Now()
+	fmt.Println()
 	if password == "" {
 		if password, err = core.GeneratePassphrase(passGenLen); err != nil {
 			return fmt.Errorf("failed to generate passphrase; %v", err)
@@ -216,6 +223,7 @@ func decrypt(cCtx *cli.Context) error {
 	}
 
 	startTime := time.Now()
+	fmt.Println()
 	err = decryptFiles(paths, outputDir, password, overwrite, force, noEmojiAndColor)
 	if err != nil {
 		return err
@@ -273,5 +281,25 @@ func decryptFiles(paths []string, outputDir, password string, overwrite, force, 
 
 	wg.Wait()
 	barPool.Stop()
+	return nil
+}
+
+func generate(cCtx *cli.Context) error {
+	lengthArg := cCtx.Args().First()
+	if lengthArg == "" {
+		return cli.ShowSubcommandHelp(cCtx)
+	}
+
+	length, err := strconv.Atoi(lengthArg)
+	if err != nil {
+		return fmt.Errorf("error parsing '%s', must be a number", lengthArg)
+	}
+
+	passphrase, err := core.GeneratePassphrase(length)
+	if err != nil {
+		return fmt.Errorf("failed to generate passphrase; %s", err)
+	}
+
+	fmt.Println(passphrase)
 	return nil
 }
