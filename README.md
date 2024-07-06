@@ -19,6 +19,8 @@ _eddy_ is a simple and fast CLI file encryption tool. It features concurrent fil
 
 `decrypt`, `dec`, `d` - decrypt provided files.
 
+`generate`, `gen`, `g` - generate a passphrase.
+
 ### Flags
 `--output, -o` - specify output directory.
 
@@ -51,6 +53,9 @@ eddy -wo ./Documents dec secret.txt.eddy
 ```
 eddy --unsafe-password supeR-$ecr3t --no-emoji -o . enc "D:/stuff/secret.txt" secret2.txt
 ```
+```
+eddy gen 10
+```
 
 ## Installation
 Prebuilt binaries are available for **Windows, Linux, and macOS (both x86 and ARM)**: download the latest release from the [releases](https://github.com/70sh1/eddy/releases) page for the desired OS.
@@ -64,7 +69,9 @@ go install github.com/70sh1/eddy@latest
 > If you are on Linux and using this method, make sure that go bin path is added to your PATH environment variable: e.g. `export PATH=$PATH:$HOME/go/bin`
 
 ## Passphrase generation
-If no password (empty one) was provided during encryption (this includes lack of `--unsafe-password` flag and leaving interactive password prompt empty), _eddy_ will generate and use a secure passphrase (length of 6 words by default). The length can be adjusted using `--passgenlen (-g)` flag. Additionally, if the `-g` flag is provided, the password prompt will be skipped automatically. The passphrase is generated using cryptohraphically secure PRNG provided by the OS and EFF's long wordlist. You can read more about passphrases [here](https://www.eff.org/dice).
+If no password (empty one) was provided during encryption (this includes lack of `--unsafe-password` flag and leaving interactive password prompt empty), _eddy_ will generate and use a secure passphrase (length of 6 words by default). The length can be adjusted using `--passgenlen (-g)` flag. Additionally, if the `-g` flag is provided, the password prompt will be skipped automatically. The passphrase is generated using cryptohraphically secure PRNG provided by the OS and EFF's long wordlist. The `generate` command is also available for standalone generation.
+
+ You can read more about passphrases [here](https://www.eff.org/dice).
 
 ## What this tool doesn't do
 - _eddy_ doesn't delete input files.
