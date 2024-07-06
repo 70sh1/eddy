@@ -30,11 +30,11 @@ func main() {
 		},
 		UseShortOptionHandling: true,
 		Suggest:                true,
-		Before: func(ctx *cli.Context) error {
+		Before: func(cCtx *cli.Context) error {
 			// Remove date/time prefix from logger
 			log.SetFlags(0)
 			// Only logging errors with log.Fatal so this prefix is set
-			noEmojiAndColor := ctx.Bool("no-emoji")
+			noEmojiAndColor := cCtx.Bool("no-emoji")
 			logPrefix := "ERROR: "
 			if !noEmojiAndColor {
 				logPrefix = "❗ " + color.RedString(logPrefix)
