@@ -60,7 +60,7 @@ func EncryptFile(source *os.File, pathOut, password string, progress io.Writer) 
 	}
 
 	multi := io.MultiWriter(tmpFile, progress)
-	if _, err := io.CopyBuffer(multi, enc, make([]byte, 2048*2048)); err != nil {
+	if _, err := io.CopyBuffer(multi, enc, make([]byte, bufSize)); err != nil {
 		return err
 	}
 

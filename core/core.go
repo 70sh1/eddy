@@ -24,7 +24,10 @@ const (
 	Decryption
 )
 
-const headerLen = 92
+const (
+	headerLen = 92
+	bufSize   = 2048 * 2048
+)
 
 //go:embed wordlist.txt
 var wordlist string
