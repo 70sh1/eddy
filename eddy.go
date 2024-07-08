@@ -130,7 +130,7 @@ func encrypt(cCtx *cli.Context) error {
 	fmt.Println()
 	if password == "" {
 		if password, err = core.GeneratePassphrase(passGenLen); err != nil {
-			return fmt.Errorf("failed to generate passphrase; %v", err)
+			return fmt.Errorf("failed to generate passphrase; %w", err)
 		}
 		noPasswordProvided = true
 	}
@@ -142,7 +142,8 @@ func encrypt(cCtx *cli.Context) error {
 	if noPasswordProvided && processedAny {
 		fmt.Println()
 		fmt.Printf(
-			format.CondPrefix("🔑 ", "NOTE: This passphrase was generated and used: '%v'\n", noEmojiAndColor), password,
+			format.CondPrefix("🔑 ", "NOTE: This passphrase was generated and used: '%s'\n", noEmojiAndColor),
+			password,
 		)
 	}
 	printDoneMessage(startTime, noEmojiAndColor)
@@ -297,7 +298,7 @@ func generate(cCtx *cli.Context) error {
 
 	passphrase, err := core.GeneratePassphrase(length)
 	if err != nil {
-		return fmt.Errorf("failed to generate passphrase; %s", err)
+		return fmt.Errorf("failed to generate passphrase; %w", err)
 	}
 
 	fmt.Println(passphrase)
