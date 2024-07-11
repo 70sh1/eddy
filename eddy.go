@@ -30,6 +30,7 @@ func main() {
 		},
 		UseShortOptionHandling: true,
 		Suggest:                true,
+		OnUsageError:           onUsageError,
 		Before: func(cCtx *cli.Context) error {
 			// Remove date/time prefix from logger
 			log.SetFlags(0)
@@ -296,5 +297,11 @@ func generate(cCtx *cli.Context) error {
 	}
 
 	fmt.Println(passphrase)
+	return nil
+}
+
+func onUsageError(cCtx *cli.Context, err error, isSubcommand bool) error {
+	fmt.Printf("Incorrect Usage: %v\n", err)
+	os.Exit(1)
 	return nil
 }
