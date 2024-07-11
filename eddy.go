@@ -106,7 +106,6 @@ func printDoneMessage(startTime time.Time, noEmojiAndColor bool) {
 }
 
 func encrypt(cCtx *cli.Context) error {
-	var noPasswordProvided bool
 	var err error
 
 	outputDir := cCtx.String("output")
@@ -119,6 +118,7 @@ func encrypt(cCtx *cli.Context) error {
 	if paths, outputDir, err = pathutils.CleanAndCheckPaths(paths, outputDir); err != nil {
 		return err
 	}
+	fmt.Println()
 	if password == "" && passGenLen == 0 {
 		if password, err = ui.AskPassword(core.Encryption, noEmojiAndColor); err != nil {
 			return err
@@ -127,37 +127,32 @@ func encrypt(cCtx *cli.Context) error {
 	}
 
 	startTime := time.Now()
-	fmt.Println()
 	if password == "" {
 		if password, err = core.GeneratePassphrase(passGenLen); err != nil {
 			return fmt.Errorf("failed to generate passphrase; %w", err)
 		}
-		noPasswordProvided = true
-	}
-
-	processedAny, err := encryptFiles(paths, outputDir, password, overwrite, noEmojiAndColor)
-	if err != nil {
-		return err
-	}
-	if noPasswordProvided && processedAny {
-		fmt.Println()
 		fmt.Printf(
-			format.CondPrefix("🔑 ", "NOTE: This passphrase was generated and used: '%s'\n", noEmojiAndColor),
+			format.CondPrefix("🔑 ", "NOTE: using this passphrase: '%s'\n", noEmojiAndColor),
 			password,
 		)
+		fmt.Println()
+	}
+
+	err = encryptFiles(paths, outputDir, password, overwrite, noEmojiAndColor)
+	if err != nil {
+		return err
 	}
 	printDoneMessage(startTime, noEmojiAndColor)
 
 	return nil
 }
 
-func encryptFiles(paths []string, outputDir, password string, overwrite, noEmojiAndColor bool) (bool, error) {
+func encryptFiles(paths []string, outputDir, password string, overwrite, noEmojiAndColor bool) error {
 	var wg sync.WaitGroup
-	var processedAny bool
 
 	barPool, pbars := ui.NewBarPool(paths, noEmojiAndColor)
 	if err := barPool.Start(); err != nil {
-		return false, err
+		return err
 	}
 
 	wg.Add(len(paths))
@@ -193,13 +188,12 @@ func encryptFiles(paths []string, outputDir, password string, overwrite, noEmoji
 
 			bar.SetCurrent(bar.Total())
 			bar.Set("status", format.CondPrefix("🔒", "", noEmojiAndColor))
-			processedAny = true
 		}()
 	}
 
 	wg.Wait()
 	barPool.Stop()
-	return processedAny, nil
+	return nil
 }
 
 //
@@ -217,6 +211,7 @@ func decrypt(cCtx *cli.Context) error {
 	if paths, outputDir, err = pathutils.CleanAndCheckPaths(paths, outputDir); err != nil {
 		return err
 	}
+	fmt.Println()
 	if password == "" {
 		if password, err = ui.AskPassword(core.Decryption, noEmojiAndColor); err != nil {
 			return err
@@ -224,7 +219,6 @@ func decrypt(cCtx *cli.Context) error {
 	}
 
 	startTime := time.Now()
-	fmt.Println()
 	err = decryptFiles(paths, outputDir, password, overwrite, force, noEmojiAndColor)
 	if err != nil {
 		return err
