@@ -31,7 +31,7 @@ func (d *decryptor) verify(progress io.Writer) (bool, error) {
 	expectedTag := make([]byte, 64)
 	_, err := io.ReadFull(d.source, expectedTag)
 	if err != nil {
-		return false, fmt.Errorf("failed to read MAC tag; %w", err)
+		return false, fmt.Errorf("failed to read MAC tag: %w", err)
 	}
 
 	multi := io.MultiWriter(d.blake, progress)
@@ -64,7 +64,7 @@ func DecryptFile(source *os.File, pathOut, password string, force bool, progress
 	if !force {
 		valid, err := dec.verify(progress)
 		if err != nil {
-			return fmt.Errorf("error verifying file; %w", err)
+			return fmt.Errorf("error verifying file: %w", err)
 		}
 		if !valid {
 			return errors.New("incorrect password or corrupt/forged data")

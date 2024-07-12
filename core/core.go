@@ -50,7 +50,7 @@ func newProcessor(source *os.File, password string, mode Mode) (*processor, erro
 		_, err = io.ReadFull(source, nonce)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("error generating/reading nonce; %w", err)
+		return nil, fmt.Errorf("error generating/reading nonce: %w", err)
 	}
 
 	salt := make([]byte, 16)
@@ -60,7 +60,7 @@ func newProcessor(source *os.File, password string, mode Mode) (*processor, erro
 		_, err = io.ReadFull(source, salt)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("error generating/reading salt; %w", err)
+		return nil, fmt.Errorf("error generating/reading salt: %w", err)
 	}
 
 	key, err := deriveKey(password, salt)
@@ -70,7 +70,7 @@ func newProcessor(source *os.File, password string, mode Mode) (*processor, erro
 
 	c, err := chacha20.NewUnauthenticatedCipher(key, nonce)
 	if err != nil {
-		return nil, fmt.Errorf("error initializing cipher; %w", err)
+		return nil, fmt.Errorf("error initializing cipher: %w", err)
 	}
 
 	blakeKey := make([]byte, 64)

@@ -293,7 +293,7 @@ func generate(cCtx *cli.Context) error {
 
 	passphrase, err := core.GeneratePassphrase(length)
 	if err != nil {
-		return fmt.Errorf("failed to generate passphrase; %w", err)
+		return fmt.Errorf("failed to generate passphrase: %w", err)
 	}
 
 	fmt.Println(passphrase)
