@@ -1,6 +1,6 @@
 module github.com/70sh1/eddy
 
-go 1.22
+go 1.22.0
 
 retract v1.0.0
 
