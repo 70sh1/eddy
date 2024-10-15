@@ -168,7 +168,7 @@ func encryptFiles(paths []string, outputDir, password string, overwrite, noEmoji
 				pathOut = filepath.Join(outputDir, filepath.Base(pathOut))
 			}
 			if _, err := os.Stat(pathOut); !errors.Is(err, os.ErrNotExist) && !overwrite {
-				ui.BarFail(bar, errors.New("output already exists"), noEmojiAndColor)
+				ui.BarFail(bar, errors.New("output already exists (use -w to overwrite)"), noEmojiAndColor)
 				return
 			}
 			source, size, err := pathutils.OpenAndGetSize(pathIn)
@@ -249,7 +249,7 @@ func decryptFiles(paths []string, outputDir, password string, overwrite, force, 
 				pathOut = filepath.Join(outputDir, filepath.Base(pathOut))
 			}
 			if _, err := os.Stat(pathOut); !errors.Is(err, os.ErrNotExist) && !overwrite {
-				ui.BarFail(bar, errors.New("output already exists"), noEmojiAndColor)
+				ui.BarFail(bar, errors.New("output already exists (use -w to overwrite)"), noEmojiAndColor)
 				return
 			}
 			source, size, err := pathutils.OpenAndGetSize(pathIn)
