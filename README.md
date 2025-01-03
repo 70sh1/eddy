@@ -58,6 +58,15 @@ eddy gen 10
 ```
 
 ## Installation
+
+### Arch Linux
+[eddy](https://aur.archlinux.org/packages/eddy) is available as a package in the AUR. You can install it using an AUR helper (e.g. `yay`):
+```
+yay -S eddy
+```
+
+---
+
 Prebuilt binaries are available for **Windows, Linux, and macOS (both x86 and ARM)**: download the latest release from the [releases](https://github.com/70sh1/eddy/releases) page for the desired OS.
 
 ---
