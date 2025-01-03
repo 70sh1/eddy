@@ -17,15 +17,13 @@ type encryptor processor
 // returns number of bytes read and error.
 func (e *encryptor) Read(b []byte) (int, error) {
 	n, err := e.source.Read(b)
-	if n > 0 {
-		b = b[:n]
-		e.c.XORKeyStream(b, b)
-		if err := e.updateMac(b); err != nil {
-			return n, err
-		}
+	if err != nil {
 		return n, err
 	}
-	return 0, io.EOF
+	b = b[:n]
+	e.c.XORKeyStream(b, b)
+	err = e.updateMac(b)
+	return n, err
 }
 
 func (e *encryptor) updateMac(data []byte) error {

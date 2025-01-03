@@ -17,12 +17,12 @@ type decryptor processor
 // XORs it and returns number of bytes read and error.
 func (d *decryptor) Read(b []byte) (int, error) {
 	n, err := d.source.Read(b)
-	if n > 0 {
-		b = b[:n]
-		d.c.XORKeyStream(b, b)
+	if err != nil {
 		return n, err
 	}
-	return 0, io.EOF
+	b = b[:n]
+	d.c.XORKeyStream(b, b)
+	return n, err
 }
 
 // Reads the MAC tag from decryptor's underlying file, calculates the actual tag of the file and compares them.
