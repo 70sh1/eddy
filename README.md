@@ -59,14 +59,6 @@ eddy gen 10
 
 ## Installation
 
-### Arch Linux
-[eddy](https://aur.archlinux.org/packages/eddy) is available as a package in the AUR. You can install it using an AUR helper (e.g. `yay`):
-```
-yay -S eddy
-```
-
----
-
 Prebuilt binaries are available for **Windows, Linux, and macOS (both x86 and ARM)**: download the latest release from the [releases](https://github.com/70sh1/eddy/releases) page for the desired OS.
 
 ---
@@ -76,6 +68,14 @@ If you have [Go](https://go.dev/dl/) installed, the simplest way to get _eddy_ i
 go install github.com/70sh1/eddy@latest
 ```
 > If you are on Linux and using this method, make sure that go bin path is added to your PATH environment variable: e.g. `export PATH=$PATH:$HOME/go/bin`
+
+---
+
+#### Arch Linux
+[eddy](https://aur.archlinux.org/packages/eddy) is available as a package in the AUR. You can install it using an AUR helper (e.g. `yay`):
+```
+yay -S eddy
+```
 
 ## Passphrase generation
 If no password (empty one) was provided during encryption (this includes lack of `--unsafe-password` flag and leaving interactive password prompt empty), _eddy_ will generate and use a secure passphrase (length of 6 words by default). The length can be adjusted using `--passgenlen (-g)` flag. Additionally, if the `-g` flag is provided, the password prompt will be skipped automatically. The passphrase is generated using cryptohraphically secure PRNG provided by the OS and EFF's long wordlist. The `generate` command is also available for standalone generation.
