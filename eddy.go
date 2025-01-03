@@ -34,8 +34,8 @@ func main() {
 		Before: func(cCtx *cli.Context) error {
 			// Remove date/time prefix from logger
 			log.SetFlags(0)
-			// Only logging errors with log.Fatal so this prefix is set
 			noEmojiAndColor := cCtx.Bool("no-emoji")
+			// Only logging errors with log.Fatal so this prefix is set
 			logPrefix := "ERROR: "
 			if !noEmojiAndColor {
 				logPrefix = "❗ " + color.RedString(logPrefix)
@@ -157,7 +157,7 @@ func encryptFiles(paths []string, outputDir, password string, overwrite, noEmoji
 	}
 
 	wg.Add(len(paths))
-	for i := 0; i < len(paths); i++ {
+	for i := range paths {
 		bar := pbars[i]
 		pathIn := paths[i]
 		go func() {
@@ -238,7 +238,7 @@ func decryptFiles(paths []string, outputDir, password string, overwrite, force, 
 	}
 
 	wg.Add(len(paths))
-	for i := 0; i < len(paths); i++ {
+	for i := range paths {
 		bar := pbars[i]
 		pathIn := paths[i]
 		go func() {
