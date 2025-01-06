@@ -1,2 +1,4 @@
 * text=auto
-*.go text eol=LF
+*.go text eol=lf
+
+core/wordlist.txt text eol=lf
