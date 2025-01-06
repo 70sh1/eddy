@@ -102,7 +102,7 @@ func GeneratePassphrase(length int) (string, error) {
 	words := strings.Split(wordlist, "\n")
 
 	passhprase := make([]string, 0, length)
-	for i := 0; i < length; i++ {
+	for range length {
 		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(words))))
 		if err != nil {
 			return "", err

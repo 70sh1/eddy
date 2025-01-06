@@ -56,7 +56,7 @@ func CleanAndCheckPaths(paths []string, outputDir string) ([]string, string, err
 		return nil, "", errors.New("empty path sequence")
 	}
 
-	for i := 0; i < len(paths); i++ {
+	for i := range paths {
 		paths[i] = filepath.Clean(paths[i])
 	}
 

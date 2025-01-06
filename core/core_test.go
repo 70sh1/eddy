@@ -19,7 +19,7 @@ func TestGeneratePassphrase(t *testing.T) {
 	cases := []int{6, 7, 8, 9, 10, 12, 15, 50}
 	var results []string
 	for _, tCase := range cases {
-		for i := 0; i <= 10; i++ {
+		for range 10 {
 			result, err := GeneratePassphrase(tCase)
 
 			require.NoError(t, err)
@@ -51,7 +51,7 @@ func TestDeriveKey(t *testing.T) {
 
 func TestDeriveKeyError(t *testing.T) {
 	var cases [][]byte
-	for i := 0; i < 16; i++ {
+	for i := range 16 {
 		cases = append(cases, make([]byte, i))
 	}
 	for i := 17; i <= 256; i++ {
@@ -257,7 +257,7 @@ func TestEncryptDecryptFile(t *testing.T) {
 	inputs := []string{filepath.Join(dir, "small.txt"), filepath.Join(dir, "big.txt")}
 	expectedFileSizes := []int64{116, 10_485_852}
 
-	for i := 0; i < len(inputs); i++ {
+	for i := range inputs {
 		input := inputs[i]
 		output := input + ".eddy"
 		inputFileContent, err := os.ReadFile(input)
@@ -285,7 +285,7 @@ func testDecryptFile(t *testing.T, dir string) {
 	inputs := []string{filepath.Join(dir, "small.txt.eddy"), filepath.Join(dir, "big.txt.eddy")}
 	expectedOutputContent := [][]byte{[]byte("Hello, world.\nSome text!"), make([]byte, 10_485_760)}
 
-	for i := 0; i < len(inputs); i++ {
+	for i := range inputs {
 		input := inputs[i]
 		output := strings.TrimSuffix(input, ".eddy")
 		inputFileContent, err := os.ReadFile(input)
