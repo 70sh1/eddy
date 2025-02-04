@@ -42,23 +42,22 @@ type processor struct {
 
 // Creates new ChaCha20-BLAKE2b processor with underlying "source" file.
 func newProcessor(source *os.File, password string, mode Mode) (*processor, error) {
-	nonce := make([]byte, chacha20.NonceSize)
-	var err error
+	var headerSource io.Reader
+
 	if mode == Encryption {
-		_, err = io.ReadFull(rand.Reader, nonce)
+		headerSource = rand.Reader
 	} else {
-		_, err = io.ReadFull(source, nonce)
+		headerSource = source
 	}
+
+	nonce := make([]byte, chacha20.NonceSize)
+	_, err := io.ReadFull(headerSource, nonce)
 	if err != nil {
 		return nil, fmt.Errorf("error generating/reading nonce: %w", err)
 	}
 
 	salt := make([]byte, 16)
-	if mode == Encryption {
-		_, err = io.ReadFull(rand.Reader, salt)
-	} else {
-		_, err = io.ReadFull(source, salt)
-	}
+	_, err = io.ReadFull(headerSource, salt)
 	if err != nil {
 		return nil, fmt.Errorf("error generating/reading salt: %w", err)
 	}
