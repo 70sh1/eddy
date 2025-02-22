@@ -9,28 +9,26 @@ import (
 	"github.com/rivo/uniseg"
 )
 
-// Checks whenever given slice of strings contains duplicates.
+// Checks if the given slice of strings contains duplicates.
 func hasDuplicates(s []string) bool {
-	a := make(map[string]bool)
+	seen := make(map[string]struct{})
 	for _, v := range s {
-		if _, e := a[v]; !e {
-			a[v] = true
-		} else {
+		if _, exists := seen[v]; exists {
 			return true
 		}
+		seen[v] = struct{}{}
 	}
 	return false
 }
 
-// Checks whenever given slice of paths contains duplicate filenames.
+// Checks if the given slice of strings contains duplicates.
 func hasDuplicateFilenames(s []string) bool {
-	a := make(map[string]bool)
+	seen := make(map[string]struct{})
 	for _, v := range s {
-		if _, e := a[filepath.Base(v)]; !e {
-			a[filepath.Base(v)] = true
-		} else {
+		if _, exists := seen[filepath.Base(v)]; exists {
 			return true
 		}
+		seen[filepath.Base(v)] = struct{}{}
 	}
 	return false
 }
