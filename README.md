@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img width=750 src="demo.gif" alt="demo" />
+  <img width=1000 src="demo.gif" alt="demo" />
 </p>
 
 _eddy_ is a simple and fast CLI file encryption tool. It features concurrent file processing while ensuring data authenticity and plausible deniability. It is also capable of generating secure [passphrases](#passphrase-generation).
