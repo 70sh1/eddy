@@ -36,43 +36,45 @@ _eddy_ is a simple and fast CLI file encryption tool. It features concurrent fil
 
 ### Examples
 ```
+# encrypt a text file
 eddy e secret.txt
-```
-```
+
+# encrypt multiple files in parallel
 eddy e secret.txt secret2.png secret3.mp4
-```
-```
+
+# encrypt a text file using a random 8-word passphrase
 eddy -g 8 enc secret.txt
-```
-```
+
+# encrypt while overwriting output files (here it would be 'secret.txt.eddy')
 eddy --overwrite encrypt secret.txt
-```
-```
+
+# decrypt a file and put it into Documents folder
 eddy -wo ./Documents dec secret.txt.eddy
-```
-```
-eddy --unsafe-password supeR-$ecr3t --no-emoji -o . enc "D:/stuff/secret.txt" secret2.txt
-```
-```
+
+# encrypt two files and put them both into the current folder
+# using the password 'supeR-$ecr3t'
+# without using any color or emojis in the output
+eddy --unsafe-password "supeR-$ecr3t" --no-emoji -o . enc "D:/stuff/secret.txt" secret2.txt
+
+# generate a 10-word passphrase without any en/decryption
 eddy gen 10
 ```
 
 ## Installation
+The following install options are available:
 
+#### Prebuilt binaries (releases)
 Prebuilt binaries are available for **Windows, Linux, and macOS (both x86 and ARM)**: download the latest release from the [releases](https://github.com/70sh1/eddy/releases) page for the desired OS.
 
----
-
+#### via Go
 If you have [Go](https://go.dev/dl/) installed, the simplest way to get _eddy_ is to run:
 ```shell
 go install github.com/70sh1/eddy@latest
 ```
-> If you are on Linux and using this method, make sure that go bin path is added to your PATH environment variable: e.g. `export PATH=$PATH:$HOME/go/bin`
-
----
+> If you are on Linux and using this method with the default Go installation parameters, make sure that go bin path is added to your PATH environment variable: e.g. `export PATH=$PATH:$HOME/go/bin`
 
 #### Arch Linux
-[eddy](https://aur.archlinux.org/packages/eddy) is available as a package in the AUR. You can install it using an AUR helper (e.g. `yay`):
+_eddy_ is available as a [package in the AUR](https://aur.archlinux.org/packages/eddy). You can install it using an AUR helper (e.g. `yay`):
 ```
 yay -S eddy
 ```
@@ -89,7 +91,7 @@ If no password (empty one) was provided during encryption (this includes lack of
 
 ## Tips & notes
 - The maximum file size is **256 GiB**.
-- It is safe to rename any files that are encrypted with _eddy_. This means that decryption does not require `.eddy` file extension.
+- It is safe to rename any files that are encrypted with _eddy_. This means that decryption does not require `.eddy` in the file name.
 
 
 ## How it works
@@ -98,4 +100,4 @@ _eddy_ leverages `ChaCha20` for encryption paired with keyed `BLAKE2b` for data 
 ## Acknowledgements
 [urfave/cli](https://github.com/urfave/cli) - CLI framework.
 
-[pb](https://github.com/cheggaaa/pb) - Progress bars.
+[cheggaaa/pb](https://github.com/cheggaaa/pb) - Progress bars.
