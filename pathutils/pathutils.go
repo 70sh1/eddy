@@ -46,7 +46,7 @@ func FilenameOverflow(s string, n int) string {
 	return s[:to] + "..."
 }
 
-// Cleans given paths and ouputDir (which is also assumed to be a path) and checks for duplicates.
+// Cleans given paths and outputDir (which is also assumed to be a path) and checks for duplicates.
 // Also checks for duplicate filenames if outputDir is not empty.
 // Returns cleaned paths or error if any of the checks failed.
 func CleanAndCheckPaths(paths []string, outputDir string) ([]string, string, error) {
