@@ -21,7 +21,7 @@ func hasDuplicates(s []string) bool {
 	return false
 }
 
-// Checks if the given slice of strings contains duplicates.
+// Checks if the given slice of paths contains duplicate filenames.
 func hasDuplicateFilenames(s []string) bool {
 	seen := make(map[string]struct{})
 	for _, v := range s {
