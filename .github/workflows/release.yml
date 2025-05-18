@@ -8,7 +8,7 @@ permissions:
   contents: write
 
 jobs:
-  build-and-release:
+  build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -19,18 +19,19 @@ jobs:
           - { GOOS: darwin, GOARCH: arm64 }
           - { GOOS: windows, GOARCH: amd64 }
           - { GOOS: windows, GOARCH: arm64 }
+
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Set up Go
-        uses: actions/setup-go@f111f3307d8850f501ac008e886eec1fd1932a34 # v5.3.0
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
         with:
           go-version: "1.23.x"
 
       - name: Install dependencies
         run: go get .
 
-      - name: Build binaries
+      - name: Build and archive
         env:
           CGO_ENABLED: 0
           GOOS: ${{ matrix.GOOS }}
@@ -42,23 +43,51 @@ jobs:
           go build -trimpath -ldflags="-s -w" -o "$DIR/eddy"
           cp LICENSE "$DIR/eddy"
           cp README.md "$DIR/eddy"
+
           if [ "$GOOS" == "windows" ]; then
             (cd "$DIR"; zip "eddy.zip" -r eddy)
-            mv "$DIR/eddy.zip" "eddy-$VERSION-$GOOS-$GOARCH.zip"
+            ARCHIVE="eddy-$VERSION-$GOOS-$GOARCH.zip"
+            mv "$DIR/eddy.zip" "$ARCHIVE"
           else
-            tar -cvzf "eddy-$VERSION-$GOOS-$GOARCH.tar.gz" -C "$DIR" eddy
+            ARCHIVE="eddy-$VERSION-$GOOS-$GOARCH.tar.gz"
+            tar -cvzf "$ARCHIVE" -C "$DIR" eddy
           fi
+
           if [ "$GOOS" == "darwin" ]; then
-            mv eddy-$VERSION-darwin-$GOARCH.tar.gz eddy-$VERSION-macOS-$GOARCH.tar.gz
+            NEW_ARCHIVE="eddy-$VERSION-macOS-$GOARCH.tar.gz"
+            mv "$ARCHIVE" "$NEW_ARCHIVE"
+            ARCHIVE="$NEW_ARCHIVE"
           fi
 
-      - name: Generate checksums
-        run: |
-          sha256sum eddy-* > checksum.txt
+          sha256sum "$ARCHIVE" > "$ARCHIVE.sha256"
 
-      - name: Attach binaries
-        uses: softprops/action-gh-release@c95fe1489396fe8a9eb87c0abf8aa5b2ef267fda # v2.2.1
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifact-${{ matrix.GOOS }}-${{ matrix.GOARCH }}
+          path: |
+            eddy-*.tar.gz
+            eddy-*.zip
+            eddy-*.sha256
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          path: artifacts
+
+      - name: Combine checksums
+        run: |
+          find artifacts -name '*.sha256' -exec cat {} \; > checksum.txt
+
+      - name: Upload to release
+        uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf631 # v2.2.2
         with:
           files: |
-            ./eddy-*
-            ./checksum.txt
+            artifacts/**/eddy-*.tar.gz
+            artifacts/**/eddy-*.zip
+            checksum.txt
