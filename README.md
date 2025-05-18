@@ -73,6 +73,20 @@ go install github.com/70sh1/eddy@latest
 ```
 > If you are on Linux and using this method with the default Go installation parameters, make sure that go bin path is added to your PATH environment variable: e.g. `export PATH=$PATH:$HOME/go/bin`
 
+#### Scoop
+_eddy_ is available as a part of [70sh1's scoop bucket](https://github.com/70sh1/jug). To install, you first need to add the bucket:
+```
+scoop bucket add jug https://github.com/70sh1/jug
+```
+After that, run:
+```
+scoop install eddy
+```
+Alternatively, if you don't want to add the bucket, you can run this:
+```
+scoop install https://raw.githubusercontent.com/70sh1/jug/refs/heads/master/bucket/eddy.json
+```
+
 #### Arch Linux
 _eddy_ is available as a [package in the AUR](https://aur.archlinux.org/packages/eddy). You can install it using an AUR helper (e.g. `yay`):
 ```
