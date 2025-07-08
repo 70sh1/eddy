@@ -82,7 +82,7 @@ jobs:
 
       - name: Combine checksums
         run: |
-          find artifacts -name '*.sha256' -exec cat {} \; > checksum.txt
+          find artifacts -name '*.sha256' -exec cat {} \; > checksums.txt
 
       - name: Upload to release
         uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf631 # v2.2.2
@@ -90,4 +90,4 @@ jobs:
           files: |
             artifacts/**/eddy-*.tar.gz
             artifacts/**/eddy-*.zip
-            checksum.txt
+            checksums.txt
