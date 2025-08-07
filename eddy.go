@@ -133,10 +133,9 @@ func encrypt(cCtx *cli.Context) error {
 			return fmt.Errorf("failed to generate passphrase; %w", err)
 		}
 		fmt.Printf(
-			format.CondPrefix("🔑 ", "NOTE: using this passphrase: '%s'\n", noEmojiAndColor),
+			"\r"+format.CondPrefix("🔑 ", "NOTE: using this passphrase: '%s'\n\n", noEmojiAndColor),
 			password,
 		)
-		fmt.Println()
 	}
 
 	err = encryptFiles(paths, outputDir, password, overwrite, noEmojiAndColor)
