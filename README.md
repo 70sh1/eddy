@@ -12,7 +12,17 @@
   <img width=1000 src="demo.gif" alt="demo" />
 </p>
 
-_eddy_ is a simple and fast CLI file encryption tool. It features concurrent file processing while ensuring data authenticity and plausible deniability. It is also capable of generating secure [passphrases](#passphrase-generation).
+_eddy_ is a simple and fast CLI file encryption tool. It features concurrent file processing while ensuring data authenticity and plausible deniability.
+
+### Features
+- Simple to use.
+- Cross platform.
+- Glob pattern support (wildcards).
+- Concurrent file processing. Each file is processed in it's own thread (goroutine).
+- Contents authenticity guarantees upon decryption via BLAKE2b MAC tag.
+- Plausible deniability. An encrypted file cannot be distinguished from a randomly generated one.
+- Secure [passphrase generation](#passphrase-generation) (using `-g` flag or standalone `generate` command).
+
 
 ### Commands
 `encrypt`, `enc`, `e` - encrypt provided files.
