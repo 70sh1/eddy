@@ -66,6 +66,9 @@ eddy -wo ./Documents dec secret.txt.eddy
 # without using any color or emojis in the output
 eddy --unsafe-password "supeR-$ecr3t" --no-emoji -o . enc "D:/stuff/secret.txt" secret2.txt
 
+# decrypt every file starting with 'backup'
+eddy d ./backup*
+
 # generate a 10-word passphrase without any en/decryption
 eddy gen 10
 ```
