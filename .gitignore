@@ -2,3 +2,4 @@
 *.exe
 test-*
 cov.out
+.DS_Store
