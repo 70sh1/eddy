@@ -48,6 +48,18 @@ func (d *decryptor) verify(progress io.Writer) (bool, error) {
 }
 
 func DecryptFile(source *os.File, pathOut, password string, force bool, progress io.Writer) error {
+	sourceInfo, err := source.Stat()
+	if err != nil {
+		return fmt.Errorf("error checking input file: %w", err)
+	}
+	outputInfo, err := os.Stat(pathOut)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("error checking output file: %w", err)
+	}
+	if err == nil && os.SameFile(sourceInfo, outputInfo) {
+		return errors.New("input and output refer to the same file; choose a different output directory")
+	}
+
 	processor, err := newProcessor(source, password, Decryption)
 	if err != nil {
 		return err

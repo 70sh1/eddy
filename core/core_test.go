@@ -1,6 +1,7 @@
 package core
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -319,4 +320,78 @@ func TestDecryptFileError(t *testing.T) {
 	err = DecryptFile(file, output, "wrong-password", false, io.Discard)
 	require.Error(t, err)
 	require.NoFileExists(t, output)
+}
+
+func TestDecryptFileRejectsInputAsOutput(t *testing.T) {
+	dir := testutils.TestFilesSetup()
+	defer testutils.TestFilesCleanup(dir)
+	ciphertext, err := os.ReadFile(filepath.Join(dir, "small.txt.eddy"))
+	require.NoError(t, err)
+
+	cases := []struct {
+		name   string
+		output func(*testing.T, string) string
+	}{
+		{"same path", func(t *testing.T, input string) string { return input }},
+		{"unclean path", func(t *testing.T, input string) string {
+			return filepath.Dir(input) + string(os.PathSeparator) + "." + string(os.PathSeparator) + filepath.Base(input)
+		}},
+		{"relative path", func(t *testing.T, input string) string {
+			t.Chdir(filepath.Dir(input))
+			return filepath.Base(input)
+		}},
+		{"symlink", func(t *testing.T, input string) string {
+			output := filepath.Join(filepath.Dir(input), "alias")
+			if err := os.Symlink(input, output); err != nil {
+				t.Skipf("symlinks unavailable: %v", err)
+			}
+			return output
+		}},
+		{"hard link", func(t *testing.T, input string) string {
+			output := filepath.Join(filepath.Dir(input), "alias")
+			require.NoError(t, os.Link(input, output))
+			return output
+		}},
+	}
+	for _, tc := range cases {
+		for _, force := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/force=%t", tc.name, force), func(t *testing.T) {
+				input := filepath.Join(t.TempDir(), "renamed-backup")
+				require.NoError(t, os.WriteFile(input, ciphertext, 0o600))
+				output := tc.output(t, input)
+				source, err := os.Open(input)
+				require.NoError(t, err)
+				defer source.Close()
+
+				err = DecryptFile(source, output, password, force, io.Discard)
+				require.ErrorContains(t, err, "input and output refer to the same file")
+				for _, path := range []string{input, output} {
+					actual, err := os.ReadFile(path)
+					require.NoError(t, err)
+					require.Equal(t, ciphertext, actual)
+				}
+			})
+		}
+	}
+}
+
+func TestDecryptRenamedFileToDifferentDirectory(t *testing.T) {
+	dir := testutils.TestFilesSetup()
+	defer testutils.TestFilesCleanup(dir)
+	ciphertext, err := os.ReadFile(filepath.Join(dir, "small.txt.eddy"))
+	require.NoError(t, err)
+	input := filepath.Join(t.TempDir(), "renamed-backup")
+	require.NoError(t, os.WriteFile(input, ciphertext, 0o600))
+	source, err := os.Open(input)
+	require.NoError(t, err)
+	defer source.Close()
+	output := filepath.Join(t.TempDir(), filepath.Base(input))
+
+	require.NoError(t, DecryptFile(source, output, password, false, io.Discard))
+	actual, err := os.ReadFile(output)
+	require.NoError(t, err)
+	require.Equal(t, []byte("Hello, world.\nSome text!"), actual)
+	actual, err = os.ReadFile(input)
+	require.NoError(t, err)
+	require.Equal(t, ciphertext, actual)
 }

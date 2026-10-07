@@ -230,6 +230,7 @@ func decrypt(cCtx *cli.Context) error {
 
 func decryptFiles(paths []string, outputDir, password string, overwrite, force, noEmojiAndColor bool) error {
 	var wg sync.WaitGroup
+	fileErrors := make([]error, len(paths))
 
 	barPool, pbars := ui.NewBarPool(paths, noEmojiAndColor)
 	if err := barPool.Start(); err != nil {
@@ -248,11 +249,14 @@ func decryptFiles(paths []string, outputDir, password string, overwrite, force, 
 				pathOut = filepath.Join(outputDir, filepath.Base(pathOut))
 			}
 			if _, err := os.Stat(pathOut); !errors.Is(err, os.ErrNotExist) && !overwrite {
-				ui.BarFail(bar, errors.New("output already exists (use -w to overwrite)"), noEmojiAndColor)
+				err := errors.New("output already exists (use -w to overwrite)")
+				fileErrors[i] = fmt.Errorf("%s: %w", pathIn, err)
+				ui.BarFail(bar, err, noEmojiAndColor)
 				return
 			}
 			source, size, err := pathutils.OpenAndGetSize(pathIn)
 			if err != nil {
+				fileErrors[i] = fmt.Errorf("%s: %w", pathIn, err)
 				ui.BarFail(bar, err, noEmojiAndColor)
 				return
 			}
@@ -269,6 +273,7 @@ func decryptFiles(paths []string, outputDir, password string, overwrite, force, 
 
 			err = core.DecryptFile(source, pathOut, password, force, barWriter)
 			if err != nil {
+				fileErrors[i] = fmt.Errorf("%s: %w", pathIn, err)
 				ui.BarFail(bar, err, noEmojiAndColor)
 				return
 			}
@@ -280,7 +285,7 @@ func decryptFiles(paths []string, outputDir, password string, overwrite, force, 
 
 	wg.Wait()
 	barPool.Stop()
-	return nil
+	return errors.Join(fileErrors...)
 }
 
 func generate(cCtx *cli.Context) error {
