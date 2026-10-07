@@ -149,6 +149,7 @@ func encrypt(cCtx *cli.Context) error {
 
 func encryptFiles(paths []string, outputDir, password string, overwrite, noEmojiAndColor bool) error {
 	var wg sync.WaitGroup
+	fileErrors := make([]error, len(paths))
 
 	barPool, pbars := ui.NewBarPool(paths, noEmojiAndColor)
 	if err := barPool.Start(); err != nil {
@@ -167,11 +168,14 @@ func encryptFiles(paths []string, outputDir, password string, overwrite, noEmoji
 				pathOut = filepath.Join(outputDir, filepath.Base(pathOut))
 			}
 			if _, err := os.Stat(pathOut); !errors.Is(err, os.ErrNotExist) && !overwrite {
-				ui.BarFail(bar, errors.New("output already exists (use -w to overwrite)"), noEmojiAndColor)
+				err := errors.New("output already exists (use -w to overwrite)")
+				fileErrors[i] = fmt.Errorf("%s: %w", pathIn, err)
+				ui.BarFail(bar, err, noEmojiAndColor)
 				return
 			}
 			source, size, err := pathutils.OpenAndGetSize(pathIn)
 			if err != nil {
+				fileErrors[i] = fmt.Errorf("%s: %w", pathIn, err)
 				ui.BarFail(bar, err, noEmojiAndColor)
 				return
 			}
@@ -182,6 +186,7 @@ func encryptFiles(paths []string, outputDir, password string, overwrite, noEmoji
 			barWriter := bar.NewProxyWriter(io.Discard)
 
 			if err := core.EncryptFile(source, pathOut, password, barWriter); err != nil {
+				fileErrors[i] = fmt.Errorf("%s: %w", pathIn, err)
 				ui.BarFail(bar, err, noEmojiAndColor)
 				return
 			}
@@ -193,7 +198,7 @@ func encryptFiles(paths []string, outputDir, password string, overwrite, noEmoji
 
 	wg.Wait()
 	barPool.Stop()
-	return nil
+	return errors.Join(fileErrors...)
 }
 
 //
