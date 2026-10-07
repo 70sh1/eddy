@@ -3,6 +3,7 @@ package ui
 import (
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"slices"
 	"syscall"
@@ -15,8 +16,33 @@ import (
 	"golang.org/x/term"
 )
 
+type BarPool struct {
+	pool    *pb.Pool
+	started bool
+}
+
+// Start enables terminal rendering when possible. Progress rendering is optional,
+// so terminal setup failures must not prevent file processing.
+func (p *BarPool) Start() error {
+	if p.started || !term.IsTerminal(int(os.Stderr.Fd())) {
+		return nil
+	}
+	if err := p.pool.Start(); err != nil {
+		return nil
+	}
+	p.started = true
+	return nil
+}
+
+func (p *BarPool) Stop() error {
+	if !p.started {
+		return nil
+	}
+	return p.pool.Stop()
+}
+
 // Creates new progress bar pool.
-func NewBarPool(paths []string, noEmojiAndColor bool) (*pb.Pool, []*pb.ProgressBar) {
+func NewBarPool(paths []string, noEmojiAndColor bool) (*BarPool, []*pb.ProgressBar) {
 	barTmpl := `{{ string . "status" }} {{ string . "filename" }} {{ string . "filesize" }} {{ bar . "[" "-"  ">" " " "]" }} {{ string . "error" }}`
 	bars := make([]*pb.ProgressBar, len(paths))
 	for i, path := range paths {
@@ -25,7 +51,7 @@ func NewBarPool(paths []string, noEmojiAndColor bool) (*pb.Pool, []*pb.ProgressB
 		bar.Set("filename", pathutils.FilenameOverflow(filepath.Base(path), 25))
 		bars[i] = bar
 	}
-	return pb.NewPool(bars...), bars
+	return &BarPool{pool: pb.NewPool(bars...)}, bars
 }
 
 func BarFail(bar *pb.ProgressBar, err error, noEmojiAndColor bool) {

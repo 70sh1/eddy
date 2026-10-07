@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"io"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -21,4 +23,29 @@ func TestNewBarPool(t *testing.T) {
 			require.Contains(t, bars[i].String(), filepath.Base(tCase[i]))
 		}
 	}
+}
+
+func TestBarPoolWithNonTerminalOutput(t *testing.T) {
+	output, err := os.CreateTemp(t.TempDir(), "output")
+	require.NoError(t, err)
+	stderr := os.Stderr
+	os.Stderr = output
+	t.Cleanup(func() {
+		os.Stderr = stderr
+		output.Close()
+	})
+
+	pool, bars := NewBarPool([]string{"secret.txt"}, true)
+	require.NoError(t, pool.Start())
+	bar := bars[0]
+	bar.SetTotal(4)
+	_, err = bar.NewProxyWriter(io.Discard).Write([]byte("data"))
+	require.NoError(t, err)
+	require.Equal(t, int64(4), bar.Current())
+	bar.Finish()
+	require.NoError(t, pool.Stop())
+
+	contents, err := os.ReadFile(output.Name())
+	require.NoError(t, err)
+	require.Empty(t, contents)
 }
