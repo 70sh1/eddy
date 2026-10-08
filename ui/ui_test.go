@@ -9,6 +9,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestEmoji(t *testing.T) {
+	require.Equal(t, "🔑 ", Emoji("🔑 ", false))
+	require.Empty(t, Emoji("🔑 ", true))
+}
+
 func TestNewBarPool(t *testing.T) {
 	cases := [][]string{
 		{"file1", "path/file2.dat", "home/user/docs/file2"},

@@ -104,7 +104,7 @@ func main() {
 func printDoneMessage(startTime time.Time, noEmojiAndColor bool) {
 	fmt.Println()
 	deltaTime := time.Since(startTime).Round(time.Millisecond)
-	fmt.Printf(format.CondPrefix("✨ ", "Done in %v\n", noEmojiAndColor), deltaTime)
+	fmt.Printf("%sDone in %v\n", ui.Emoji("✨ ", noEmojiAndColor), deltaTime)
 }
 
 func encrypt(cCtx *cli.Context) error {
@@ -138,8 +138,8 @@ func encrypt(cCtx *cli.Context) error {
 			return fmt.Errorf("failed to generate passphrase; %w", err)
 		}
 		fmt.Printf(
-			"\r"+format.CondPrefix("🔑 ", "NOTE: using this passphrase: '%s'\n\n", noEmojiAndColor),
-			password,
+			"\r%sNOTE: using this passphrase: '%s'\n\n",
+			ui.Emoji("🔑 ", noEmojiAndColor), password,
 		)
 	}
 
@@ -225,7 +225,7 @@ func encryptFiles(paths, outputs []string, password string, overwrite, noEmojiAn
 		}
 
 		bar.SetCurrent(bar.Total())
-		bar.Set("status", format.CondPrefix("🔒", "", noEmojiAndColor))
+		bar.Set("status", ui.Emoji("🔒", noEmojiAndColor))
 	})
 	barPool.Stop()
 	return errors.Join(fileErrors...)
@@ -305,7 +305,7 @@ func decryptFiles(paths, outputs []string, password string, overwrite, force, no
 		}
 
 		bar.SetCurrent(bar.Total())
-		bar.Set("status", format.CondPrefix("🔓", "", noEmojiAndColor))
+		bar.Set("status", ui.Emoji("🔓", noEmojiAndColor))
 	})
 	barPool.Stop()
 	return errors.Join(fileErrors...)

@@ -9,7 +9,6 @@ import (
 	"syscall"
 
 	"github.com/70sh1/eddy/core"
-	"github.com/70sh1/eddy/format"
 	"github.com/70sh1/eddy/pathutils"
 	"github.com/cheggaaa/pb/v3"
 	"github.com/fatih/color"
@@ -19,6 +18,14 @@ import (
 type BarPool struct {
 	pool    *pb.Pool
 	started bool
+}
+
+// Emoji returns value unless emoji output is disabled.
+func Emoji(value string, disabled bool) string {
+	if disabled {
+		return ""
+	}
+	return value
 }
 
 // Start enables terminal rendering when possible. Progress rendering is optional,
@@ -47,7 +54,7 @@ func NewBarPool(paths []string, noEmojiAndColor bool) (*BarPool, []*pb.ProgressB
 	bars := make([]*pb.ProgressBar, len(paths))
 	for i, path := range paths {
 		bar := pb.New64(1).SetTemplateString(barTmpl).SetWidth(90)
-		bar.Set("status", format.CondPrefix("  ", "", noEmojiAndColor))
+		bar.Set("status", Emoji("  ", noEmojiAndColor))
 		bar.Set("filename", pathutils.FilenameOverflow(filepath.Base(path), 25))
 		bars[i] = bar
 	}
@@ -59,19 +66,19 @@ func BarFail(bar *pb.ProgressBar, err error, noEmojiAndColor bool) {
 	if !noEmojiAndColor {
 		errText = color.RedString(errText)
 	}
-	bar.Set("status", format.CondPrefix("❌", "", noEmojiAndColor))
+	bar.Set("status", Emoji("❌", noEmojiAndColor))
 	bar.Set("error", errText)
 }
 
 func AskPassword(mode core.Mode, noEmojiAndColor bool) (string, error) {
-	fmt.Print(format.CondPrefix("🔑 ", "Password: ", noEmojiAndColor))
+	fmt.Print(Emoji("🔑 ", noEmojiAndColor), "Password: ")
 	password, err := term.ReadPassword(int(syscall.Stdin))
 	if err != nil {
 		return "", err
 	}
 	fmt.Print("\r")
 	if mode == core.Encryption {
-		fmt.Print(format.CondPrefix("🔑 ", "Confirm password: ", noEmojiAndColor))
+		fmt.Print(Emoji("🔑 ", noEmojiAndColor), "Confirm password: ")
 		password2, err := term.ReadPassword(int(syscall.Stdin))
 		if err != nil {
 			return "", err

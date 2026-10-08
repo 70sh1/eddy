@@ -8,14 +8,6 @@ const (
 	gib = mib * 1024
 )
 
-// Conditional prefix.
-func CondPrefix(prefix string, s string, withoutPrefix bool) string {
-	if withoutPrefix {
-		return s
-	}
-	return prefix + s
-}
-
 func FormatSize(b int64) string {
 	switch {
 	case b >= gib:
