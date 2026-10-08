@@ -37,7 +37,9 @@ func (e *encryptor) updateMac(data []byte) error {
 	return nil
 }
 
-func EncryptFile(source *os.File, pathOut, password string, progress io.Writer) error {
+// EncryptFile stages encrypted output privately and publishes it when complete.
+// Unless overwrite is true, an existing destination is never replaced.
+func EncryptFile(source *os.File, pathOut, password string, overwrite bool, progress io.Writer) error {
 	processor, err := newProcessor(source, password, Encryption)
 	if err != nil {
 		return err
@@ -70,10 +72,5 @@ func EncryptFile(source *os.File, pathOut, password string, progress io.Writer) 
 		return err
 	}
 
-	tmpFile.Close()
-	if err := os.Rename(tmpFile.Name(), pathOut); err != nil {
-		return err
-	}
-
-	return nil
+	return pathutils.CommitOutput(tmpFile, pathOut, overwrite)
 }

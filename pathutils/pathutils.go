@@ -21,18 +21,6 @@ func hasDuplicates(s []string) bool {
 	return false
 }
 
-// Checks if the given slice of paths contains duplicate filenames.
-func hasDuplicateFilenames(s []string) bool {
-	seen := make(map[string]struct{})
-	for _, v := range s {
-		if _, exists := seen[filepath.Base(v)]; exists {
-			return true
-		}
-		seen[filepath.Base(v)] = struct{}{}
-	}
-	return false
-}
-
 func FilenameOverflow(s string, n int) string {
 	charCount := uniseg.GraphemeClusterCount(s)
 	if charCount < n {
@@ -47,7 +35,6 @@ func FilenameOverflow(s string, n int) string {
 }
 
 // Cleans given paths and outputDir (which is also assumed to be a path) and checks for duplicates.
-// Also checks for duplicate filenames if outputDir is not empty.
 // Returns cleaned paths or error if any of the checks failed.
 func CleanAndCheckPaths(paths []string, outputDir string) ([]string, string, error) {
 	if len(paths) == 1 && paths[0] == "" {
@@ -70,10 +57,6 @@ func CleanAndCheckPaths(paths []string, outputDir string) ([]string, string, err
 		}
 		if !fileInfo.IsDir() {
 			return nil, "", fmt.Errorf("'%s' is not a directory", filepath.Base(outputDir))
-		}
-
-		if hasDuplicateFilenames(paths) {
-			return nil, "", errors.New("duplicate filenames are not allowed with output (-o) flag")
 		}
 	}
 

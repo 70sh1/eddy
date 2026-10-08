@@ -40,7 +40,7 @@ func TestDecryptFileAuthenticatesConsumedCiphertext(t *testing.T) {
 		return len(b), nil
 	})
 
-	require.NoError(t, DecryptFile(source, output, password, false, progress))
+	require.NoError(t, DecryptFile(source, output, password, false, true, progress))
 	require.True(t, changed)
 	actual, err := os.ReadFile(output)
 	require.NoError(t, err)
@@ -55,7 +55,7 @@ func TestDecryptFileRejectsChangesToUnreadCiphertext(t *testing.T) {
 	source, err := os.Open(input)
 	require.NoError(t, err)
 	encrypted := input + ".eddy"
-	require.NoError(t, EncryptFile(source, encrypted, password, io.Discard))
+	require.NoError(t, EncryptFile(source, encrypted, password, true, io.Discard))
 	require.NoError(t, source.Close())
 	source, err = os.OpenFile(encrypted, os.O_RDWR, 0)
 	require.NoError(t, err)
@@ -79,7 +79,7 @@ func TestDecryptFileRejectsChangesToUnreadCiphertext(t *testing.T) {
 		return len(b), nil
 	})
 
-	err = DecryptFile(source, output, password, false, progress)
+	err = DecryptFile(source, output, password, false, true, progress)
 	require.ErrorContains(t, err, "incorrect password or corrupt/forged data")
 	require.True(t, changed)
 	actual, err := os.ReadFile(output)
@@ -104,7 +104,7 @@ func TestDecryptFileProcessesPayloadOnce(t *testing.T) {
 				return len(b), nil
 			})
 			output := filepath.Join(t.TempDir(), "output")
-			require.NoError(t, DecryptFile(source, output, password, false, progress))
+			require.NoError(t, DecryptFile(source, output, password, false, true, progress))
 			require.Equal(t, size-headerLen, processed)
 		})
 	}
@@ -141,7 +141,7 @@ func TestDecryptFileRejectsInvalidData(t *testing.T) {
 			previous := []byte("existing output")
 			require.NoError(t, os.WriteFile(output, previous, 0o600))
 
-			require.Error(t, DecryptFile(source, output, tc.key, false, io.Discard))
+			require.Error(t, DecryptFile(source, output, tc.key, false, true, io.Discard))
 			actual, err := os.ReadFile(output)
 			require.NoError(t, err)
 			require.Equal(t, previous, actual)
@@ -166,7 +166,7 @@ func TestDecryptFileForceBypassesAuthentication(t *testing.T) {
 			require.NoError(t, err)
 			defer source.Close()
 			output := filepath.Join(t.TempDir(), "output")
-			require.NoError(t, DecryptFile(source, output, key, true, io.Discard))
+			require.NoError(t, DecryptFile(source, output, key, true, true, io.Discard))
 			actual, err := os.ReadFile(output)
 			require.NoError(t, err)
 			if key == password {
@@ -191,7 +191,7 @@ func TestDecryptFileProgressFailurePreservesOutput(t *testing.T) {
 	failure := errors.New("progress failed")
 	progress := writerFunc(func(b []byte) (int, error) { return 0, failure })
 
-	require.ErrorIs(t, DecryptFile(source, output, password, false, progress), failure)
+	require.ErrorIs(t, DecryptFile(source, output, password, false, true, progress), failure)
 	actual, err := os.ReadFile(output)
 	require.NoError(t, err)
 	require.Equal(t, previous, actual)
@@ -207,7 +207,7 @@ func BenchmarkDecryptFile(b *testing.B) {
 	require.NoError(b, err)
 	require.NoError(b, input.Truncate(size))
 	encrypted := filepath.Join(dir, "input.eddy")
-	require.NoError(b, EncryptFile(input, encrypted, password, io.Discard))
+	require.NoError(b, EncryptFile(input, encrypted, password, true, io.Discard))
 	require.NoError(b, input.Close())
 	source, err := os.Open(encrypted)
 	require.NoError(b, err)
@@ -219,6 +219,6 @@ func BenchmarkDecryptFile(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_, err := source.Seek(0, io.SeekStart)
 		require.NoError(b, err)
-		require.NoError(b, DecryptFile(source, output, password, false, io.Discard))
+		require.NoError(b, DecryptFile(source, output, password, false, true, io.Discard))
 	}
 }

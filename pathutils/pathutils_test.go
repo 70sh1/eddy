@@ -45,42 +45,6 @@ func TestHasDuplicates(t *testing.T) {
 	}
 }
 
-func TestHasDuplicateFilenames(t *testing.T) {
-	cases := []struct {
-		in       []string
-		expected bool
-	}{
-		{
-			in:       []string{"C:/test/something.txt", "D:/path/something.txt", "C:/"},
-			expected: true,
-		},
-		{
-			in:       []string{"C:/something.txt", "H:/qq", "C:/path/something.txt", "a"},
-			expected: true,
-		},
-		{
-			in:       []string{"file1", "file2", "D:/somewhere/file1"},
-			expected: true,
-		},
-		{
-			in:       []string{"C:/something.txt", "H:/qq/something", "C:/path/something2.txt"},
-			expected: false,
-		},
-		{
-			in:       []string{"a"},
-			expected: false,
-		},
-		{
-			in:       []string{""},
-			expected: false,
-		},
-	}
-	for _, tCase := range cases {
-		result := hasDuplicateFilenames(tCase.in)
-		require.Equal(t, tCase.expected, result)
-	}
-}
-
 func TestCleanAndCheckPaths(t *testing.T) {
 	dir := testutils.TestFilesSetup()
 	defer testutils.TestFilesCleanup(dir)
@@ -174,14 +138,6 @@ func TestCleanAndCheckPathsError(t *testing.T) {
 			"",
 			"",
 			"duplicate paths are not allowed",
-		},
-
-		{
-			[]string{"usr/path/dir/file", "usr2/another-path/dir2/file"},
-			nil,
-			dir,
-			"",
-			"duplicate filenames are not allowed with output (-o) flag",
 		},
 	}
 	for _, tCase := range cases {

@@ -38,6 +38,8 @@ _eddy_ is a simple and fast CLI file encryption tool. It features concurrent fil
 
 `--overwrite, -w` - enable overwrite existing files.
 
+Without `-w`, an existing output is preserved even if it appears while a file is being processed. A batch that maps multiple inputs to the same output is rejected before processing, including when `-w` is enabled.
+
 `--no-emoji, -n` - disable emojis and color in output.
 
 `--force` - force decrypt. Bypasses file authentication and, inherently, the password check. Useful if the encrypted file is corrupt (damaged) but you still want to decrypt it.

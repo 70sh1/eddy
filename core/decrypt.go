@@ -12,7 +12,9 @@ import (
 	"github.com/70sh1/eddy/pathutils"
 )
 
-func DecryptFile(source *os.File, pathOut, password string, force bool, progress io.Writer) error {
+// DecryptFile publishes staged plaintext only after authentication, unless force
+// is true. Unless overwrite is true, an existing destination is never replaced.
+func DecryptFile(source *os.File, pathOut, password string, force, overwrite bool, progress io.Writer) error {
 	sourceInfo, err := source.Stat()
 	if err != nil {
 		return fmt.Errorf("error checking input file: %w", err)
@@ -61,12 +63,5 @@ func DecryptFile(source *os.File, pathOut, password string, force bool, progress
 	if !force && subtle.ConstantTimeCompare(expectedTag, processor.blake.Sum(nil)) != 1 {
 		return errors.New("incorrect password or corrupt/forged data")
 	}
-	if err := tmpFile.Close(); err != nil {
-		return err
-	}
-	if err := os.Rename(tmpFile.Name(), pathOut); err != nil {
-		return err
-	}
-
-	return nil
+	return pathutils.CommitOutput(tmpFile, pathOut, overwrite)
 }

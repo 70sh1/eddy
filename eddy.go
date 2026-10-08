@@ -119,6 +119,10 @@ func encrypt(cCtx *cli.Context) error {
 	if paths, outputDir, err = pathutils.CleanAndCheckPaths(paths, outputDir); err != nil {
 		return err
 	}
+	outputs, err := outputPaths(paths, outputDir, core.Encryption)
+	if err != nil {
+		return err
+	}
 	fmt.Println()
 	if password == "" && passGenLen == 0 {
 		if password, err = ui.AskPassword(core.Encryption, noEmojiAndColor); err != nil {
@@ -138,7 +142,7 @@ func encrypt(cCtx *cli.Context) error {
 		)
 	}
 
-	err = encryptFiles(paths, outputDir, password, overwrite, noEmojiAndColor)
+	err = encryptFiles(paths, outputs, password, overwrite, noEmojiAndColor)
 	if err != nil {
 		return err
 	}
@@ -147,7 +151,26 @@ func encrypt(cCtx *cli.Context) error {
 	return nil
 }
 
-func encryptFiles(paths []string, outputDir, password string, overwrite, noEmojiAndColor bool) error {
+// Compute and validate the exact destinations before prompting or starting workers.
+func outputPaths(paths []string, outputDir string, mode core.Mode) ([]string, error) {
+	outputs := make([]string, len(paths))
+	for i, path := range paths {
+		if mode == core.Encryption {
+			outputs[i] = path + ".eddy"
+		} else {
+			outputs[i] = strings.TrimSuffix(path, ".eddy")
+		}
+		if outputDir != "" {
+			outputs[i] = filepath.Join(outputDir, filepath.Base(outputs[i]))
+		}
+	}
+	if err := pathutils.CheckDistinctOutputs(outputs); err != nil {
+		return nil, err
+	}
+	return outputs, nil
+}
+
+func encryptFiles(paths, outputs []string, password string, overwrite, noEmojiAndColor bool) error {
 	var wg sync.WaitGroup
 	fileErrors := make([]error, len(paths))
 
@@ -163,12 +186,8 @@ func encryptFiles(paths []string, outputDir, password string, overwrite, noEmoji
 		go func() {
 			defer wg.Done()
 			defer bar.Finish()
-			pathOut := pathIn + ".eddy"
-			if outputDir != "" {
-				pathOut = filepath.Join(outputDir, filepath.Base(pathOut))
-			}
-			if _, err := os.Stat(pathOut); !errors.Is(err, os.ErrNotExist) && !overwrite {
-				err := errors.New("output already exists (use -w to overwrite)")
+			pathOut := outputs[i]
+			if err := pathutils.CheckOutputAvailable(pathOut, overwrite); err != nil {
 				fileErrors[i] = fmt.Errorf("%s: %w", pathIn, err)
 				ui.BarFail(bar, err, noEmojiAndColor)
 				return
@@ -185,7 +204,7 @@ func encryptFiles(paths []string, outputDir, password string, overwrite, noEmoji
 			bar.Set("filesize", format.FormatSize(size))
 			barWriter := bar.NewProxyWriter(io.Discard)
 
-			if err := core.EncryptFile(source, pathOut, password, barWriter); err != nil {
+			if err := core.EncryptFile(source, pathOut, password, overwrite, barWriter); err != nil {
 				fileErrors[i] = fmt.Errorf("%s: %w", pathIn, err)
 				ui.BarFail(bar, err, noEmojiAndColor)
 				return
@@ -216,6 +235,10 @@ func decrypt(cCtx *cli.Context) error {
 	if paths, outputDir, err = pathutils.CleanAndCheckPaths(paths, outputDir); err != nil {
 		return err
 	}
+	outputs, err := outputPaths(paths, outputDir, core.Decryption)
+	if err != nil {
+		return err
+	}
 	fmt.Println()
 	if password == "" {
 		if password, err = ui.AskPassword(core.Decryption, noEmojiAndColor); err != nil {
@@ -224,7 +247,7 @@ func decrypt(cCtx *cli.Context) error {
 	}
 
 	startTime := time.Now()
-	err = decryptFiles(paths, outputDir, password, overwrite, force, noEmojiAndColor)
+	err = decryptFiles(paths, outputs, password, overwrite, force, noEmojiAndColor)
 	if err != nil {
 		return err
 	}
@@ -233,7 +256,7 @@ func decrypt(cCtx *cli.Context) error {
 	return nil
 }
 
-func decryptFiles(paths []string, outputDir, password string, overwrite, force, noEmojiAndColor bool) error {
+func decryptFiles(paths, outputs []string, password string, overwrite, force, noEmojiAndColor bool) error {
 	var wg sync.WaitGroup
 	fileErrors := make([]error, len(paths))
 
@@ -249,12 +272,8 @@ func decryptFiles(paths []string, outputDir, password string, overwrite, force, 
 		go func() {
 			defer wg.Done()
 			defer bar.Finish()
-			pathOut := strings.TrimSuffix(pathIn, ".eddy")
-			if outputDir != "" {
-				pathOut = filepath.Join(outputDir, filepath.Base(pathOut))
-			}
-			if _, err := os.Stat(pathOut); !errors.Is(err, os.ErrNotExist) && !overwrite {
-				err := errors.New("output already exists (use -w to overwrite)")
+			pathOut := outputs[i]
+			if err := pathutils.CheckOutputAvailable(pathOut, overwrite); err != nil {
 				fileErrors[i] = fmt.Errorf("%s: %w", pathIn, err)
 				ui.BarFail(bar, err, noEmojiAndColor)
 				return
@@ -271,7 +290,7 @@ func decryptFiles(paths []string, outputDir, password string, overwrite, force, 
 			bar.Set("filesize", format.FormatSize(size))
 			barWriter := bar.NewProxyWriter(io.Discard)
 
-			err = core.DecryptFile(source, pathOut, password, force, barWriter)
+			err = core.DecryptFile(source, pathOut, password, force, overwrite, barWriter)
 			if err != nil {
 				fileErrors[i] = fmt.Errorf("%s: %w", pathIn, err)
 				ui.BarFail(bar, err, noEmojiAndColor)

@@ -184,7 +184,7 @@ func TestEncryptDecryptFile(t *testing.T) {
 		testutils.PanicIfErr(err)
 		file, err := os.Open(input)
 		testutils.PanicIfErr(err)
-		err = EncryptFile(file, output, password, io.Discard)
+		err = EncryptFile(file, output, password, true, io.Discard)
 		require.NoError(t, err)
 		require.FileExists(t, output)
 		outputFileContent, err := os.ReadFile(output)
@@ -213,7 +213,7 @@ func testDecryptFile(t *testing.T, dir string) {
 		file, err := os.Open(input)
 		testutils.PanicIfErr(err)
 		defer file.Close()
-		err = DecryptFile(file, output, password, false, io.Discard)
+		err = DecryptFile(file, output, password, false, true, io.Discard)
 		require.NoError(t, err)
 		require.FileExists(t, output)
 		outputFileContent, err := os.ReadFile(output)
@@ -236,7 +236,7 @@ func TestDecryptFileError(t *testing.T) {
 	file, err := os.Open(input)
 	testutils.PanicIfErr(err)
 	defer file.Close()
-	err = DecryptFile(file, output, "wrong-password", false, io.Discard)
+	err = DecryptFile(file, output, "wrong-password", false, true, io.Discard)
 	require.Error(t, err)
 	require.NoFileExists(t, output)
 }
@@ -282,7 +282,7 @@ func TestDecryptFileRejectsInputAsOutput(t *testing.T) {
 				require.NoError(t, err)
 				defer source.Close()
 
-				err = DecryptFile(source, output, password, force, io.Discard)
+				err = DecryptFile(source, output, password, force, true, io.Discard)
 				require.ErrorContains(t, err, "input and output refer to the same file")
 				for _, path := range []string{input, output} {
 					actual, err := os.ReadFile(path)
@@ -306,7 +306,7 @@ func TestDecryptRenamedFileToDifferentDirectory(t *testing.T) {
 	defer source.Close()
 	output := filepath.Join(t.TempDir(), filepath.Base(input))
 
-	require.NoError(t, DecryptFile(source, output, password, false, io.Discard))
+	require.NoError(t, DecryptFile(source, output, password, false, true, io.Discard))
 	actual, err := os.ReadFile(output)
 	require.NoError(t, err)
 	require.Equal(t, []byte("Hello, world.\nSome text!"), actual)
