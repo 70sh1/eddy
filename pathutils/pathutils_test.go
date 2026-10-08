@@ -45,6 +45,12 @@ func TestHasDuplicates(t *testing.T) {
 	}
 }
 
+func TestFilenameOverflowPreservesGraphemeClusters(t *testing.T) {
+	require.Equal(t, "short", FilenameOverflow("short", 25))
+	require.Equal(t, "a\u0301b...", FilenameOverflow("a\u0301bc", 2))
+	require.Equal(t, "👩🏽‍💻...", FilenameOverflow("👩🏽‍💻ab", 1))
+}
+
 func TestCleanAndCheckPaths(t *testing.T) {
 	dir := testutils.TestFilesSetup()
 	defer testutils.TestFilesCleanup(dir)
@@ -160,4 +166,25 @@ func TestCloseAndRemove(t *testing.T) {
 	CloseAndRemove(file)
 
 	require.NoFileExists(t, file.Name())
+}
+
+func TestOpenAndGetSize(t *testing.T) {
+	dir := t.TempDir()
+	regular := filepath.Join(dir, "regular")
+	require.NoError(t, os.WriteFile(regular, []byte("contents"), 0o600))
+
+	file, size, err := OpenAndGetSize(regular)
+	require.NoError(t, err)
+	require.Equal(t, int64(len("contents")), size)
+	require.NoError(t, file.Close())
+
+	file, size, err = OpenAndGetSize(dir)
+	require.ErrorContains(t, err, "processing directories is not supported")
+	require.Nil(t, file)
+	require.Zero(t, size)
+
+	file, size, err = OpenAndGetSize(filepath.Join(dir, "missing"))
+	require.EqualError(t, err, "file not found")
+	require.Nil(t, file)
+	require.Zero(t, size)
 }

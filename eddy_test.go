@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/70sh1/eddy/core"
@@ -66,6 +67,47 @@ func TestHeadlessCLI(t *testing.T) {
 	actual, err = os.ReadFile(input)
 	require.NoError(t, err)
 	require.Equal(t, plaintext, actual)
+}
+
+func TestGenerateCLI(t *testing.T) {
+	executable, err := os.Executable()
+	require.NoError(t, err)
+	run := func(t *testing.T, args ...string) (string, string, error) {
+		t.Helper()
+		commandArgs := []string{"-test.run=^TestHeadlessCLIHelper$", "--", "-n"}
+		cmd := exec.Command(executable, append(commandArgs, args...)...)
+		cmd.Env = append(os.Environ(), "EDDY_TEST_HEADLESS_HELPER=1")
+		var stdout, stderr bytes.Buffer
+		cmd.Stdout, cmd.Stderr = &stdout, &stderr
+		err := cmd.Run()
+		return stdout.String(), stderr.String(), err
+	}
+
+	t.Run("requested length", func(t *testing.T) {
+		stdout, stderr, err := run(t, "generate", "6")
+		require.NoError(t, err, stderr)
+		require.Len(t, strings.Split(strings.TrimSpace(stdout), "-"), 6)
+		require.Empty(t, stderr)
+	})
+
+	for _, tc := range []struct {
+		name    string
+		arg     string
+		failure string
+	}{
+		{"non-number", "six", "must be a number"},
+		{"insecure length", "5", "length less than 6 is not secure"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			stdout, stderr, err := run(t, "generate", tc.arg)
+			var exitError *exec.ExitError
+			require.ErrorAs(t, err, &exitError)
+			require.Equal(t, 1, exitError.ExitCode())
+			require.Empty(t, stdout)
+			require.Contains(t, stderr, tc.failure)
+			require.NotContains(t, stderr, "\x1b")
+		})
+	}
 }
 
 func TestOutputPaths(t *testing.T) {

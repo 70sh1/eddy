@@ -140,6 +140,45 @@ func TestCheckOutputAvailablePreservesFilesystemError(t *testing.T) {
 	require.NotContains(t, err.Error(), "output already exists")
 }
 
+func TestCommitOutputRejectsCloseFailure(t *testing.T) {
+	for _, overwrite := range []bool{false, true} {
+		for _, existing := range []bool{false, true} {
+			name := "new destination"
+			if existing {
+				name = "existing destination"
+			}
+			if overwrite {
+				name += "/overwrite"
+			}
+			t.Run(name, func(t *testing.T) {
+				dir := t.TempDir()
+				output := filepath.Join(dir, "output")
+				if existing {
+					require.NoError(t, os.WriteFile(output, []byte("original"), 0o600))
+				}
+				file, err := os.CreateTemp(dir, "*.tmp")
+				require.NoError(t, err)
+				defer CloseAndRemove(file)
+				_, err = file.WriteString("replacement")
+				require.NoError(t, err)
+				// A closed handle makes Close fail deterministically without
+				// requiring a filesystem that reports delayed write failures.
+				require.NoError(t, file.Close())
+
+				require.ErrorIs(t, CommitOutput(file, output, overwrite), os.ErrClosed)
+				require.FileExists(t, file.Name(), "failed close must prevent publication")
+				if existing {
+					actual, err := os.ReadFile(output)
+					require.NoError(t, err)
+					require.Equal(t, "original", string(actual))
+				} else {
+					require.NoFileExists(t, output)
+				}
+			})
+		}
+	}
+}
+
 func TestConcurrentCommitHelper(t *testing.T) {
 	if os.Getenv("EDDY_TEST_COMMIT_HELPER") != "1" {
 		return

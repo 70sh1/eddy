@@ -1,6 +1,7 @@
 package core
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -9,6 +10,46 @@ import (
 	"github.com/70sh1/eddy/testutils"
 	"github.com/stretchr/testify/require"
 )
+
+func TestEncryptFileProgressFailurePreservesOutput(t *testing.T) {
+	dir := t.TempDir()
+	input := filepath.Join(dir, "input")
+	output := filepath.Join(dir, "output")
+	previous := []byte("existing output")
+	require.NoError(t, os.WriteFile(input, []byte("secret contents"), 0o600))
+	require.NoError(t, os.WriteFile(output, previous, 0o600))
+	source, err := os.Open(input)
+	require.NoError(t, err)
+	defer source.Close()
+	failure := errors.New("progress failed")
+	progress := writerFunc(func([]byte) (int, error) { return 0, failure })
+
+	require.ErrorIs(t, EncryptFile(source, output, password, true, progress), failure)
+	actual, err := os.ReadFile(output)
+	require.NoError(t, err)
+	require.Equal(t, previous, actual)
+	entries, err := os.ReadDir(dir)
+	require.NoError(t, err)
+	require.Len(t, entries, 2, "temporary output must be cleaned up")
+}
+
+func TestEncryptFileWritesProgressForEntirePlaintext(t *testing.T) {
+	dir := t.TempDir()
+	input := filepath.Join(dir, "input")
+	plaintext := []byte("secret contents")
+	require.NoError(t, os.WriteFile(input, plaintext, 0o600))
+	source, err := os.Open(input)
+	require.NoError(t, err)
+	defer source.Close()
+	var processed int
+	progress := writerFunc(func(b []byte) (int, error) {
+		processed += len(b)
+		return len(b), nil
+	})
+
+	require.NoError(t, EncryptFile(source, filepath.Join(dir, "output"), password, false, progress))
+	require.Equal(t, len(plaintext), processed)
+}
 
 func TestOutputCreatedDuringProcessing(t *testing.T) {
 	fixtures := testutils.TestFilesSetup()
