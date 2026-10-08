@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -170,8 +171,24 @@ func outputPaths(paths []string, outputDir string, mode core.Mode) ([]string, er
 	return outputs, nil
 }
 
-func encryptFiles(paths, outputs []string, password string, overwrite, noEmojiAndColor bool) error {
+// Acquire a slot before launching each worker so waiting files do not hold
+// goroutines, open files, or processing buffers. The limit is fixed per batch.
+func runFileWorkers(count int, process func(int)) {
 	var wg sync.WaitGroup
+	slots := make(chan struct{}, min(count, runtime.GOMAXPROCS(0)))
+	wg.Add(count)
+	for i := range count {
+		slots <- struct{}{}
+		go func() {
+			defer wg.Done()
+			defer func() { <-slots }()
+			process(i)
+		}()
+	}
+	wg.Wait()
+}
+
+func encryptFiles(paths, outputs []string, password string, overwrite, noEmojiAndColor bool) error {
 	fileErrors := make([]error, len(paths))
 
 	barPool, pbars := ui.NewBarPool(paths, noEmojiAndColor)
@@ -179,43 +196,37 @@ func encryptFiles(paths, outputs []string, password string, overwrite, noEmojiAn
 		return err
 	}
 
-	wg.Add(len(paths))
-	for i := range paths {
+	runFileWorkers(len(paths), func(i int) {
 		bar := pbars[i]
 		pathIn := paths[i]
-		go func() {
-			defer wg.Done()
-			defer bar.Finish()
-			pathOut := outputs[i]
-			if err := pathutils.CheckOutputAvailable(pathOut, overwrite); err != nil {
-				fileErrors[i] = fmt.Errorf("%s: %w", pathIn, err)
-				ui.BarFail(bar, err, noEmojiAndColor)
-				return
-			}
-			source, size, err := pathutils.OpenAndGetSize(pathIn)
-			if err != nil {
-				fileErrors[i] = fmt.Errorf("%s: %w", pathIn, err)
-				ui.BarFail(bar, err, noEmojiAndColor)
-				return
-			}
-			defer source.Close()
+		defer bar.Finish()
+		pathOut := outputs[i]
+		if err := pathutils.CheckOutputAvailable(pathOut, overwrite); err != nil {
+			fileErrors[i] = fmt.Errorf("%s: %w", pathIn, err)
+			ui.BarFail(bar, err, noEmojiAndColor)
+			return
+		}
+		source, size, err := pathutils.OpenAndGetSize(pathIn)
+		if err != nil {
+			fileErrors[i] = fmt.Errorf("%s: %w", pathIn, err)
+			ui.BarFail(bar, err, noEmojiAndColor)
+			return
+		}
+		defer source.Close()
 
-			bar.SetTotal(size)
-			bar.Set("filesize", format.FormatSize(size))
-			barWriter := bar.NewProxyWriter(io.Discard)
+		bar.SetTotal(size)
+		bar.Set("filesize", format.FormatSize(size))
+		barWriter := bar.NewProxyWriter(io.Discard)
 
-			if err := core.EncryptFile(source, pathOut, password, overwrite, barWriter); err != nil {
-				fileErrors[i] = fmt.Errorf("%s: %w", pathIn, err)
-				ui.BarFail(bar, err, noEmojiAndColor)
-				return
-			}
+		if err := core.EncryptFile(source, pathOut, password, overwrite, barWriter); err != nil {
+			fileErrors[i] = fmt.Errorf("%s: %w", pathIn, err)
+			ui.BarFail(bar, err, noEmojiAndColor)
+			return
+		}
 
-			bar.SetCurrent(bar.Total())
-			bar.Set("status", format.CondPrefix("🔒", "", noEmojiAndColor))
-		}()
-	}
-
-	wg.Wait()
+		bar.SetCurrent(bar.Total())
+		bar.Set("status", format.CondPrefix("🔒", "", noEmojiAndColor))
+	})
 	barPool.Stop()
 	return errors.Join(fileErrors...)
 }
@@ -257,7 +268,6 @@ func decrypt(cCtx *cli.Context) error {
 }
 
 func decryptFiles(paths, outputs []string, password string, overwrite, force, noEmojiAndColor bool) error {
-	var wg sync.WaitGroup
 	fileErrors := make([]error, len(paths))
 
 	barPool, pbars := ui.NewBarPool(paths, noEmojiAndColor)
@@ -265,44 +275,38 @@ func decryptFiles(paths, outputs []string, password string, overwrite, force, no
 		return err
 	}
 
-	wg.Add(len(paths))
-	for i := range paths {
+	runFileWorkers(len(paths), func(i int) {
 		bar := pbars[i]
 		pathIn := paths[i]
-		go func() {
-			defer wg.Done()
-			defer bar.Finish()
-			pathOut := outputs[i]
-			if err := pathutils.CheckOutputAvailable(pathOut, overwrite); err != nil {
-				fileErrors[i] = fmt.Errorf("%s: %w", pathIn, err)
-				ui.BarFail(bar, err, noEmojiAndColor)
-				return
-			}
-			source, size, err := pathutils.OpenAndGetSize(pathIn)
-			if err != nil {
-				fileErrors[i] = fmt.Errorf("%s: %w", pathIn, err)
-				ui.BarFail(bar, err, noEmojiAndColor)
-				return
-			}
-			defer source.Close()
+		defer bar.Finish()
+		pathOut := outputs[i]
+		if err := pathutils.CheckOutputAvailable(pathOut, overwrite); err != nil {
+			fileErrors[i] = fmt.Errorf("%s: %w", pathIn, err)
+			ui.BarFail(bar, err, noEmojiAndColor)
+			return
+		}
+		source, size, err := pathutils.OpenAndGetSize(pathIn)
+		if err != nil {
+			fileErrors[i] = fmt.Errorf("%s: %w", pathIn, err)
+			ui.BarFail(bar, err, noEmojiAndColor)
+			return
+		}
+		defer source.Close()
 
-			bar.SetTotal(size)
-			bar.Set("filesize", format.FormatSize(size))
-			barWriter := bar.NewProxyWriter(io.Discard)
+		bar.SetTotal(size)
+		bar.Set("filesize", format.FormatSize(size))
+		barWriter := bar.NewProxyWriter(io.Discard)
 
-			err = core.DecryptFile(source, pathOut, password, force, overwrite, barWriter)
-			if err != nil {
-				fileErrors[i] = fmt.Errorf("%s: %w", pathIn, err)
-				ui.BarFail(bar, err, noEmojiAndColor)
-				return
-			}
+		err = core.DecryptFile(source, pathOut, password, force, overwrite, barWriter)
+		if err != nil {
+			fileErrors[i] = fmt.Errorf("%s: %w", pathIn, err)
+			ui.BarFail(bar, err, noEmojiAndColor)
+			return
+		}
 
-			bar.SetCurrent(bar.Total())
-			bar.Set("status", format.CondPrefix("🔓", "", noEmojiAndColor))
-		}()
-	}
-
-	wg.Wait()
+		bar.SetCurrent(bar.Total())
+		bar.Set("status", format.CondPrefix("🔓", "", noEmojiAndColor))
+	})
 	barPool.Stop()
 	return errors.Join(fileErrors...)
 }

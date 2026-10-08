@@ -18,7 +18,7 @@ _eddy_ is a simple and fast CLI file encryption tool. It features concurrent fil
 - Simple to use.
 - Cross platform.
 - Glob pattern support (wildcards).
-- Concurrent file processing. Each file is processed in it's own thread (goroutine).
+- Concurrent file processing, with at most `GOMAXPROCS` files active at once.
 - Contents authenticity guarantees upon decryption via BLAKE2b MAC tag.
 - Plausible deniability. An encrypted file cannot be distinguished from a randomly generated one.
 - Secure [passphrase generation](#passphrase-generation) (using `-g` flag or standalone `generate` command).
