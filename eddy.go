@@ -267,12 +267,7 @@ func decryptFiles(paths []string, outputDir, password string, overwrite, force, 
 			}
 			defer source.Close()
 
-			if force {
-				bar.SetTotal(size)
-			} else {
-				// We will read the file twice so the progress bar total should be double the file size
-				bar.SetTotal(size * 2)
-			}
+			bar.SetTotal(size)
 			bar.Set("filesize", format.FormatSize(size))
 			barWriter := bar.NewProxyWriter(io.Discard)
 

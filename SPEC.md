@@ -9,6 +9,8 @@ After initializing a ChaCha20 instance with the key from the previous step and a
 
 The file MAC tag is calculated from the ciphertext, not plaintext. This is called "Encrypt-then-MAC" (EtM).
 
+During authenticated decryption, calculate the MAC over exactly the ciphertext bytes used to produce the plaintext. Verify the stored tag using a constant-time comparison before accepting the plaintext as authentic.
+
 ### File format
 An encrypted file has the following structure. No delimiters or flags. This provides plausible deniability - the file is generally indistinguishable from, say, a compressed file or a randomly generated one.
 
